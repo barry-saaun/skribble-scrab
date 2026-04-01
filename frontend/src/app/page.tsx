@@ -1,5 +1,7 @@
+import { env } from "~/env";
+
 async function getHealth() {
-  const res = await fetch("http://localhost:8080/api/health", {
+  const res = await fetch(`${env.BACKEND_URL}/api/health`, {
     cache: "no-store",
   });
 
