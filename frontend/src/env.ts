@@ -6,10 +6,13 @@ export const env = createEnv({
     NODE_ENV: z.enum(["development", "test", "production"]),
     BACKEND_URL: z.url().default("http://localhost:8080"),
   },
-  client: {},
+  client: {
+    NEXT_PUBLIC_WS_BASE_URL: z.url(),
+  },
   runtimeEnv: {
     NODE_ENV: process.env.NODE_ENV,
     BACKEND_URL: process.env.BACKEND_URL,
+    NEXT_PUBLIC_WS_BASE_URL: process.env.NEXT_PUBLIC_WS_BASE_URL,
   },
   /**
    * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation. This is especially
