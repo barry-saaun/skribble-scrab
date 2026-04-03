@@ -13,10 +13,26 @@ type Sender interface {
 	PlayerID() string
 }
 
+type Role string
+
+const (
+	RoleHost      Role = "host"
+	RolePlayer    Role = "player"
+	RoleSpectator Role = "spectator"
+)
+
+type Status string
+
+const (
+	StatusWaiting    Status = "waiting"
+	StatusInProgress Status = "in_progress"
+	StatusFinished   Status = "finished"
+)
+
 type Player struct {
 	ID       string
 	Name     string
-	Role     string // "host" | "player" | "spectator"
+	Role     Role
 	JoinedAt time.Time
 }
 
@@ -26,7 +42,7 @@ type Room struct {
 	Players   map[string]*Player
 	Clients   map[string]Sender
 	Events    chan Event
-	Status    string // "waiting" | "in_progress" | "finished"
+	Status    Status
 	CreatedAt time.Time
 	mu        sync.RWMutex
 }

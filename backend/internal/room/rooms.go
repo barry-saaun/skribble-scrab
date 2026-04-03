@@ -21,22 +21,61 @@ type createRoomRequest struct {
 type createRoomResponse struct {
 	RoomID    string    `json:"roomId"`
 	HostID    string    `json:"hostId"`
-	Status    string    `json:"status"`
+	Status    Status    `json:"status"`
 	CreatedAt time.Time `json:"createdAt"`
 }
 
 type playerView struct {
 	ID   string `json:"id"`
 	Name string `json:"name"`
-	Role string `json:"role"`
+	Role Role   `json:"role"`
 }
 
 type getRoomResponse struct {
 	RoomID    string       `json:"roomId"`
 	HostID    string       `json:"hostId"`
-	Status    string       `json:"status"`
+	Status    Status       `json:"status"`
 	Players   []playerView `json:"players"`
 	CreatedAt time.Time    `json:"createdAt"`
+}
+
+type joinRoomRequest struct {
+	PlayerID string `json:"playerId"`
+}
+
+type joinRoomResponse struct {
+	PlayerID string `json:"playerId"`
+	RoomID   string `json:"roomId"`
+	Role     Role   `json:"role"`
+}
+
+func (h *RoomHandler) HandleJoinRoom(w http.ResponseWriter, r *http.Request) {
+	roomId := r.PathValue("roomId")
+
+	var req joinRoomRequest
+	room, ok := h.manager.GetRoom(roomId)
+
+	if !ok {
+		http.Error(w, `{"error":"room not found"}`, http.StatusNotFound)
+		return
+	}
+
+	if _, ok := room.GetPlayer(req.PlayerID); ok {
+		http.Error(w, `{"error": "player already in room"}`, http.StatusConflict)
+		return
+	}
+
+	player := &Player{ID: req.PlayerID, Role: RolePlayer, JoinedAt: time.Now()}
+	room.addPlayer(player)
+
+	w.Header().Set("Content-Type", "application/json")
+
+	w.WriteHeader(http.StatusCreated)
+	_ = json.NewEncoder(w).Encode(joinRoomResponse{
+		PlayerID: player.ID,
+		Role:     player.Role,
+		RoomID:   roomId,
+	})
 }
 
 func (h *RoomHandler) HandleCreateRoom(w http.ResponseWriter, r *http.Request) {
