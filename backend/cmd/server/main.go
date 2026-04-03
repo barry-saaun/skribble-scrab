@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/barry-saaun/skribble-scrab/backend/internal/room"
 	"github.com/gorilla/websocket"
 )
 
@@ -16,6 +17,10 @@ var upgrader = websocket.Upgrader{
 
 func main() {
 	mux := http.NewServeMux()
+
+	roomManager := room.NewRoomManager()
+	roomHandler := room.NewRoomHandler(roomManager)
+	room.RegisterRoutes(mux, roomHandler)
 
 	mux.HandleFunc("/api/health", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
