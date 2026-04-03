@@ -33,6 +33,8 @@ func (m *RoomManager) CreateRoom(hostID string) *Room {
 		ID:        roomID,
 		HostID:    hostID,
 		Players:   map[string]*Player{hostID: host},
+		Clients:   make(map[string]Sender),
+		Events:    make(chan Event, 256),
 		Status:    "waiting",
 		CreatedAt: time.Now(),
 	}
@@ -40,6 +42,8 @@ func (m *RoomManager) CreateRoom(hostID string) *Room {
 	m.mu.Lock()
 	m.rooms[roomID] = r
 	m.mu.Unlock()
+
+	go r.Run()
 
 	return r
 }
