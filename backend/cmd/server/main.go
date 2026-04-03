@@ -5,22 +5,28 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/barry-saaun/skribble-scrab/backend/internal/config"
 	"github.com/barry-saaun/skribble-scrab/backend/internal/room"
-	"github.com/gorilla/websocket"
+	"github.com/barry-saaun/skribble-scrab/backend/internal/ws"
+	"github.com/joho/godotenv"
 )
 
-var upgrader = websocket.Upgrader{
-	CheckOrigin: func(r *http.Request) bool {
-		return r.Header.Get("Origin") == "http://localhost:3002"
-	},
-}
+var cfg config.Config
 
 func main() {
+	// Load .env.local from repo root (silently ignored if absent — e.g. in production)
+	_ = godotenv.Load("../../.env.local")
+
+	cfg = config.Load()
+
 	mux := http.NewServeMux()
 
 	roomManager := room.NewRoomManager()
 	roomHandler := room.NewRoomHandler(roomManager)
 	room.RegisterRoutes(mux, roomHandler)
+
+	wsHandler := ws.NewHanlder(roomManager)
+	ws.RegisterRoutes(mux, wsHandler)
 
 	mux.HandleFunc("/api/health", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
@@ -29,42 +35,15 @@ func main() {
 		})
 	})
 
-	mux.HandleFunc("/ws", handleWS)
-
-	log.Println("server running on :8080")
-	if err := http.ListenAndServe(":8080", corsMiddleware(mux)); err != nil {
+	log.Printf("server running on :%s\n", cfg.Port)
+	if err := http.ListenAndServe(":"+cfg.Port, corsMiddleware(mux)); err != nil {
 		log.Fatal(err)
-	}
-}
-
-func handleWS(w http.ResponseWriter, r *http.Request) {
-	conn, err := upgrader.Upgrade(w, r, nil)
-	if err != nil {
-		log.Println("websocket upgrade error:", err)
-		return
-	}
-
-	defer conn.Close()
-
-	for {
-		messageType, message, err := conn.ReadMessage()
-		if err != nil {
-			log.Println("read error:", err)
-			break
-		}
-
-		log.Printf("received: %s\n", message)
-
-		if err := conn.WriteMessage(messageType, message); err != nil {
-			log.Println("write error:", err)
-			break
-		}
 	}
 }
 
 func corsMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
+		w.Header().Set("Access-Control-Allow-Origin", cfg.FrontendURL)
 		w.Header().Set(
 			"Access-Control-Allow-Methods",
 			"GET, POST, PUT, PATCH, DELETE, OPTIONS",
