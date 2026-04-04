@@ -25,7 +25,7 @@ func main() {
 	roomHandler := room.NewRoomHandler(roomManager)
 	room.RegisterRoutes(mux, roomHandler)
 
-	wsHandler := ws.NewHanlder(roomManager)
+	wsHandler := ws.NewHandler(roomManager, cfg)
 	ws.RegisterRoutes(mux, wsHandler)
 
 	mux.HandleFunc("/api/health", func(w http.ResponseWriter, r *http.Request) {

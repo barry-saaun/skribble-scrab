@@ -9,21 +9,20 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-var cfg config.Config
-
-var upgrader = websocket.Upgrader{
-	CheckOrigin: func(r *http.Request) bool {
-		origin := r.Header.Get("Origin")
-		return origin == cfg.FrontendURL
-	},
-}
-
 type Handler struct {
-	manager *room.RoomManager
+	manager  *room.RoomManager
+	upgrader websocket.Upgrader
 }
 
-func NewHanlder(manager *room.RoomManager) *Handler {
-	return &Handler{manager: manager}
+func NewHandler(manager *room.RoomManager, cfg config.Config) *Handler {
+	return &Handler{
+		manager: manager,
+		upgrader: websocket.Upgrader{
+			CheckOrigin: func(r *http.Request) bool {
+				return r.Header.Get("Origin") == cfg.FrontendURL
+			},
+		},
+	}
 }
 
 func (h *Handler) HandleWS(w http.ResponseWriter, r *http.Request) {
@@ -48,7 +47,7 @@ func (h *Handler) HandleWS(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	conn, err := upgrader.Upgrade(w, r, nil)
+	conn, err := h.upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		return
 	}
