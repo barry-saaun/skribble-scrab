@@ -138,6 +138,8 @@ func (r *Room) Run() {
 		switch event.Type {
 		case EventGameStart:
 			r.handleGameStart(event)
+		case EventChatMessage:
+			r.handleChatMessage(event)
 		}
 	}
 }

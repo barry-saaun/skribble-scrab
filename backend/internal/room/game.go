@@ -79,3 +79,20 @@ func (r *Room) handleGameStart(event Event) {
 		client.Send(b)
 	}
 }
+
+func (r *Room) handleChatMessage(event Event) {
+	raw, ok := event.Payload.(json.RawMessage)
+	if !ok {
+		return
+	}
+
+	var p chatPayload
+	if err := json.Unmarshal(raw, &p); err != nil || p.Text == "" {
+		return
+	}
+
+	r.BroadcastEvent(EventChatMessage, chatBroadcastPayload{
+		PlayerID: event.PlayerID,
+		Text:     p.Text,
+	})
+}
