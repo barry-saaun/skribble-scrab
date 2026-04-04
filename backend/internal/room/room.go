@@ -1,3 +1,4 @@
+// Package room manages game rooms and their lifecycle.
 package room
 
 import (

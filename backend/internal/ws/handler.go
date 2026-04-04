@@ -1,3 +1,4 @@
+// Package ws handles WebSocket connections and real-time communication.
 package ws
 
 import (
