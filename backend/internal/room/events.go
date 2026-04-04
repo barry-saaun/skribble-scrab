@@ -6,6 +6,11 @@ const (
 	EventPlayerJoined EventType = "player.joined"
 	EventPlayerLeft   EventType = "player.left"
 	EventPlayerList   EventType = "room.player_list"
+
+	EventGameStart   EventType = "game.start"
+	EventPlayerGuess EventType = "player.guess"
+	EventRoundResult EventType = "round.result"
+	EventChatMessage EventType = "chat.message"
 )
 
 type Event struct {

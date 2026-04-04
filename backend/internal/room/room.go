@@ -36,10 +36,18 @@ type Player struct {
 	JoinedAt time.Time
 }
 
+type GameState struct {
+	CurrentRound int
+	DrawerID     string
+	CurrentWord  string
+	Scores       map[string]int
+}
+
 type Room struct {
 	ID           string
 	HostID       string
 	HostUsername string
+	Game         GameState
 	Players      map[string]*Player
 	Clients      map[string]Sender
 	Events       chan Event
