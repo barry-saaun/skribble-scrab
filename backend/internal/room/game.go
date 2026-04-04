@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"maps"
 	"math/rand"
+	"strings"
 )
 
 // TODO: pick a random from the db later
@@ -54,6 +55,7 @@ func (r *Room) handleGameStart(event Event) {
 	r.Game.DrawerID = r.HostID
 	r.Game.CurrentWord = wordList[rand.Intn(len(wordList))]
 	r.Game.Scores = make(map[string]int)
+	r.Game.GuessedPlayers = make(map[string]bool)
 
 	// snapshot clients under lock so we can send without holding the mutex
 	r.mu.RLock()
@@ -95,4 +97,59 @@ func (r *Room) handleChatMessage(event Event) {
 		PlayerID: event.PlayerID,
 		Text:     p.Text,
 	})
+}
+
+type roundEndPayload struct {
+	Word   string         `json:"word"`
+	Scores map[string]int `json:"scores"`
+}
+
+func (r *Room) handlePlayerGuess(event Event) {
+	if r.Status != StatusInProgress || event.PlayerID == r.Game.DrawerID {
+		return
+	}
+
+	if r.Game.GuessedPlayers[event.PlayerID] {
+		return
+	}
+
+	raw, ok := event.Payload.(json.RawMessage)
+	if !ok {
+		return
+	}
+
+	var p guessPayload
+	if err := json.Unmarshal(raw, &p); err != nil || p.Word == "" {
+		return
+	}
+
+	if !strings.EqualFold(p.Word, r.Game.CurrentWord) {
+		return
+	}
+
+	r.Game.GuessedPlayers[event.PlayerID] = true
+	r.Game.Scores[event.PlayerID] += 100
+	r.Game.Scores[r.Game.DrawerID] += 50
+
+	r.BroadcastEvent(EventRoundResult, roundResultPayload{
+		CorrectPlayerID: event.PlayerID,
+		Word:            r.Game.CurrentWord,
+		Scores:          r.Game.Scores,
+	})
+
+	// end round when all non-drawer players have guessed correctly
+	r.mu.RLock()
+	totalPlayers := len(r.Players)
+	r.mu.RUnlock()
+
+	if len(r.Game.GuessedPlayers) >= totalPlayers-1 {
+		word := r.Game.CurrentWord
+		scores := r.Game.Scores
+		r.Game = GameState{Scores: scores} // reset round state, keep scores
+		r.Status = StatusWaiting
+		r.BroadcastEvent(EventRoundEnd, roundEndPayload{
+			Word:   word,
+			Scores: scores,
+		})
+	}
 }

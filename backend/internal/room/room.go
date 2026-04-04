@@ -38,10 +38,11 @@ type Player struct {
 }
 
 type GameState struct {
-	CurrentRound int
-	DrawerID     string
-	CurrentWord  string
-	Scores       map[string]int
+	CurrentRound   int
+	DrawerID       string
+	CurrentWord    string
+	Scores         map[string]int
+	GuessedPlayers map[string]bool // playerID → guessed correctly this round
 }
 
 type Room struct {
@@ -141,6 +142,8 @@ func (r *Room) Run() {
 			r.handleGameStart(event)
 		case EventChatMessage:
 			r.handleChatMessage(event)
+		case EventPlayerGuess:
+			r.handlePlayerGuess(event)
 		}
 	}
 }

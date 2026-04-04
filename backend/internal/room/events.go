@@ -11,6 +11,7 @@ const (
 	EventGameState   EventType = "game.state"
 	EventPlayerGuess EventType = "player.guess"
 	EventRoundResult EventType = "round.result"
+	EventRoundEnd    EventType = "round.end"
 	EventChatMessage EventType = "chat.message"
 )
 
