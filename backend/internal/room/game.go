@@ -1,0 +1,81 @@
+package room
+
+import (
+	"encoding/json"
+	"maps"
+	"math/rand"
+)
+
+// TODO: pick a random from the db later
+// Right now: aim for MVP
+var wordList = []string{
+	"cat", "dog", "house", "tree", "car", "elephant", "guitar", "pizza",
+	"mountain", "ocean", "rocket", "castle", "dragon", "robot", "flower",
+}
+
+// incoming payloads
+
+type guessPayload struct {
+	Word string `json:"word"`
+}
+
+type chatPayload struct {
+	Text string `json:"text"`
+}
+
+// outgoing payloads
+
+type gameStatePayload struct {
+	Round    int    `json:"round"`
+	DrawerID string `json:"drawerId"`
+	Word     string `json:"word,omitempty"` // only populated for the drawer
+	Status   Status `json:"status"`
+}
+
+type roundResultPayload struct {
+	CorrectPlayerID string         `json:"correctPlayerId"`
+	Word            string         `json:"word"`
+	Scores          map[string]int `json:"scores"`
+}
+
+type chatBroadcastPayload struct {
+	PlayerID string `json:"playerId"`
+	Text     string `json:"text"`
+}
+
+// handleGameStart starts the game. Only the host can trigger this, and only from StatusWaiting.
+func (r *Room) handleGameStart(event Event) {
+	if event.PlayerID != r.HostID || r.Status != StatusWaiting {
+		return
+	}
+
+	r.Status = StatusInProgress
+	r.Game.CurrentRound++
+	r.Game.DrawerID = r.HostID
+	r.Game.CurrentWord = wordList[rand.Intn(len(wordList))]
+	r.Game.Scores = make(map[string]int)
+
+	// snapshot clients under lock so we can send without holding the mutex
+	r.mu.RLock()
+	clients := make(map[string]Sender, len(r.Clients))
+	maps.Copy(clients, r.Clients)
+	r.mu.RUnlock()
+
+	// drawer gets the word, everyone else doesn't
+	for playerID, client := range clients {
+		word := ""
+		if playerID == r.Game.DrawerID {
+			word = r.Game.CurrentWord
+		}
+		b, _ := json.Marshal(outgoingMessage{
+			Type: string(EventGameState),
+			Payload: gameStatePayload{
+				Round:    r.Game.CurrentRound,
+				DrawerID: r.Game.DrawerID,
+				Word:     word,
+				Status:   r.Status,
+			},
+		})
+		client.Send(b)
+	}
+}

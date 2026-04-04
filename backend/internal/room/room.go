@@ -103,6 +103,15 @@ type playerListPayload struct {
 	Players []playerView `json:"players"`
 }
 
+func (r *Room) BroadcastEvent(eventType EventType, payload any) {
+	b, err := json.Marshal(outgoingMessage{Type: string(eventType), Payload: payload})
+	if err != nil {
+		log.Printf("BroadcastEvent marshal error: %v", err)
+		return
+	}
+	r.Broadcast(b)
+}
+
 func (r *Room) BroadcastPlayerList() {
 	r.mu.RLock()
 	players := make([]playerView, 0, len(r.Players))
@@ -125,7 +134,10 @@ func (r *Room) BroadcastPlayerList() {
 }
 
 func (r *Room) Run() {
-	for range r.Events {
-		// event processing — extended in later phases
+	for event := range r.Events {
+		switch event.Type {
+		case EventGameStart:
+			r.handleGameStart(event)
+		}
 	}
 }
