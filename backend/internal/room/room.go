@@ -31,20 +31,27 @@ const (
 
 type Player struct {
 	ID       string
-	Name     string
+	Username string
 	Role     Role
 	JoinedAt time.Time
 }
 
 type Room struct {
-	ID        string
-	HostID    string
-	Players   map[string]*Player
-	Clients   map[string]Sender
-	Events    chan Event
-	Status    Status
-	CreatedAt time.Time
-	mu        sync.RWMutex
+	ID           string
+	HostID       string
+	HostUsername string
+	Players      map[string]*Player
+	Clients      map[string]Sender
+	Events       chan Event
+	Status       Status
+	CreatedAt    time.Time
+	mu           sync.RWMutex
+}
+
+func (r *Room) AddPlayer(p *Player) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	r.Players[p.ID] = p
 }
 
 func (r *Room) GetPlayer(playerID string) (*Player, bool) {
@@ -92,7 +99,7 @@ func (r *Room) BroadcastPlayerList() {
 	r.mu.RLock()
 	players := make([]playerView, 0, len(r.Players))
 	for _, p := range r.Players {
-		players = append(players, playerView{ID: p.ID, Name: p.Name, Role: p.Role})
+		players = append(players, playerView{ID: p.ID, Username: p.Username, Role: p.Role})
 	}
 	r.mu.RUnlock()
 

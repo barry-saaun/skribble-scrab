@@ -20,23 +20,25 @@ func NewRoomManager() *RoomManager {
 	}
 }
 
-func (m *RoomManager) CreateRoom(hostID string) *Room {
+func (m *RoomManager) CreateRoom(hostID, hostUsername string) *Room {
 	roomID := generateID(6)
 
 	host := &Player{
 		ID:       hostID,
-		Role:     "host",
+		Username: hostUsername,
+		Role:     RoleHost,
 		JoinedAt: time.Now(),
 	}
 
 	r := &Room{
-		ID:        roomID,
-		HostID:    hostID,
-		Players:   map[string]*Player{hostID: host},
-		Clients:   make(map[string]Sender),
-		Events:    make(chan Event, 256),
-		Status:    "waiting",
-		CreatedAt: time.Now(),
+		ID:           roomID,
+		HostID:       hostID,
+		HostUsername: hostUsername,
+		Players:      map[string]*Player{hostID: host},
+		Clients:      make(map[string]Sender),
+		Events:       make(chan Event, 256),
+		Status:       StatusWaiting,
+		CreatedAt:    time.Now(),
 	}
 
 	m.mu.Lock()
