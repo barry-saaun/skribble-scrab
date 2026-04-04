@@ -1,6 +1,7 @@
 package ws
 
 import (
+	"encoding/json"
 	"log"
 
 	"github.com/barry-saaun/skribble-scrab/backend/internal/room"
@@ -8,13 +9,6 @@ import (
 )
 
 const sendBufferSize = 256
-
-type Client struct {
-	conn     *websocket.Conn
-	roomID   string
-	playerID string
-	send     chan []byte
-}
 
 func NewClient(conn *websocket.Conn, roomID, playerID string) *Client {
 	return &Client{
@@ -50,14 +44,25 @@ func (c *Client) ReadPump(r *room.Room) {
 	}()
 
 	for {
-		_, _, err := c.conn.ReadMessage()
+		_, msg, err := c.conn.ReadMessage()
 		if err != nil {
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
 				log.Printf("client %s read error: %v", c.playerID, err)
 			}
 			break
 		}
-		// incoming game messages forwarded to room.Events in later phases
+
+		var incoming IncomingMessage
+		if err := json.Unmarshal(msg, &incoming); err != nil {
+			log.Printf("client %s invalid message: %v", c.playerID, err)
+			continue
+		}
+
+		r.Events <- room.Event{
+			Type:     room.EventType(incoming.Type),
+			PlayerID: c.playerID,
+			Payload:  incoming.Payload,
+		}
 	}
 }
 
