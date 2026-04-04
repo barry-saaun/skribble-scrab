@@ -52,7 +52,15 @@ func (r *Room) handleGameStart(event Event) {
 
 	r.Status = StatusInProgress
 	r.Game.CurrentRound++
-	r.Game.DrawerID = r.HostID
+
+	r.mu.RLock()
+	playerIDs := make([]string, 0, len(r.Players))
+	for id := range r.Players {
+		playerIDs = append(playerIDs, id)
+	}
+	r.mu.RUnlock()
+
+	r.Game.DrawerID = playerIDs[rand.Intn(len(playerIDs))]
 	r.Game.CurrentWord = wordList[rand.Intn(len(wordList))]
 	r.Game.Scores = make(map[string]int)
 	r.Game.GuessedPlayers = make(map[string]bool)
