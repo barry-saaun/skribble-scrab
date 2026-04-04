@@ -99,7 +99,8 @@ func (r *Room) BroadcastPlayerList() {
 	r.mu.RLock()
 	players := make([]playerView, 0, len(r.Players))
 	for _, p := range r.Players {
-		players = append(players, playerView{ID: p.ID, Username: p.Username, Role: p.Role})
+		_, connected := r.Clients[p.ID]
+		players = append(players, playerView{ID: p.ID, Username: p.Username, Role: p.Role, Connected: connected})
 	}
 	r.mu.RUnlock()
 

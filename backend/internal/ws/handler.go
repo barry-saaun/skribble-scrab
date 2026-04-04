@@ -26,11 +26,11 @@ func NewHanlder(manager *room.RoomManager) *Handler {
 }
 
 func (h *Handler) HandleWS(w http.ResponseWriter, r *http.Request) {
-	roomID := r.URL.Query().Get("roomId")
-	playerID := r.URL.Query().Get("playerId")
+	roomID := r.URL.Query().Get("roomID")
+	playerID := r.URL.Query().Get("playerID")
 
 	if roomID == "" || playerID == "" {
-		http.Error(w, "missing roomId or playerId", http.StatusBadRequest)
+		http.Error(w, "missing roomID or playerID", http.StatusBadRequest)
 		return
 	}
 

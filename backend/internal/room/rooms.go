@@ -28,9 +28,10 @@ type createRoomResponse struct {
 }
 
 type playerView struct {
-	ID       string `json:"id"`
-	Username string `json:"userName"`
-	Role     Role   `json:"role"`
+	ID        string `json:"id"`
+	Username  string `json:"userName"`
+	Role      Role   `json:"role"`
+	Connected bool   `json:"connected"`
 }
 
 type getRoomResponse struct {
