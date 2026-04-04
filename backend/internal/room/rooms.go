@@ -123,7 +123,8 @@ func (h *RoomHandler) HandleGetRoom(w http.ResponseWriter, r *http.Request) {
 	room.mu.RLock()
 	players := make([]playerView, 0, len(room.Players))
 	for _, p := range room.Players {
-		players = append(players, playerView{ID: p.ID, Username: p.Username, Role: p.Role})
+		_, connected := room.Clients[p.ID]
+		players = append(players, playerView{ID: p.ID, Username: p.Username, Role: p.Role, Connected: connected})
 	}
 	room.mu.RUnlock()
 
