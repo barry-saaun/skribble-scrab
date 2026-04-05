@@ -106,6 +106,21 @@ func (r *Room) BroadcastEvent(eventType EventType, payload any) {
 	r.Broadcast(b)
 }
 
+func (r *Room) BroadcastExceptSender(senderID string, msg []byte) {
+	r.mu.RLock()
+	clients := make([]Sender, 0, len(r.Clients))
+	for _, c := range r.Clients {
+		if c.PlayerID() != senderID {
+			clients = append(clients, c)
+		}
+	}
+	r.mu.RUnlock()
+
+	for _, c := range clients {
+		c.Send(msg)
+	}
+}
+
 func (r *Room) BroadcastPlayerList() {
 	r.mu.RLock()
 	players := make([]playerView, 0, len(r.Players))
