@@ -37,14 +37,6 @@ type Player struct {
 	JoinedAt time.Time
 }
 
-type GameState struct {
-	CurrentRound   int
-	DrawerID       string
-	CurrentWord    string
-	Scores         map[string]int
-	GuessedPlayers map[string]bool // playerID → guessed correctly this round
-}
-
 type Room struct {
 	ID           string
 	HostID       string
@@ -142,8 +134,15 @@ func (r *Room) Run() {
 			r.handleGameStart(event)
 		case EventChatMessage:
 			r.handleChatMessage(event)
-		case EventPlayerGuess:
+		case EventGuessSubmit:
 			r.handlePlayerGuess(event)
+		case EventRoundTick:
+			seconds, _ := event.Payload.(int)
+			r.BroadcastEvent(EventRoundTick, roundTickPayload{SecondsRemaining: seconds})
+		case EventRoundTimeout:
+			if r.Status == StatusInProgress {
+				r.advanceDrawer(r.Game.CurrentWord, r.Game.Scores)
+			}
 		}
 	}
 }
