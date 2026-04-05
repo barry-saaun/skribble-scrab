@@ -14,14 +14,24 @@ var wordList = []string{
 	"mountain", "ocean", "rocket", "castle", "dragon", "robot", "flower",
 }
 
+func getNumOfRotation(numOfPlayers int) (int, error) {
+	switch {
+	case numOfPlayers >= 3 && numOfPlayers <= 5:
+		return 3, nil
+	case numOfPlayers >= 6 && numOfPlayers <= 10:
+		return 2, nil
+	case numOfPlayers > 10:
+		return 1, nil
+	default:
+		return 0, fmt.Errorf("invalid player count: %d (minimum 3)", numOfPlayers)
+	}
+}
+
 // handleGameStart starts the game. Only the host can trigger this, and only from StatusWaiting.
 func (r *Room) handleGameStart(event Event) {
 	if event.PlayerID != r.HostID || r.Status != StatusWaiting {
 		return
 	}
-
-	r.Status = StatusInProgress
-	r.Game.CurrentRound++
 
 	r.mu.RLock()
 	playerIDs := make([]string, 0, len(r.Players))
@@ -30,12 +40,37 @@ func (r *Room) handleGameStart(event Event) {
 	}
 	r.mu.RUnlock()
 
-	r.Game.DrawerID = playerIDs[rand.Intn(len(playerIDs))]
-	r.Game.CurrentWord = wordList[rand.Intn(len(wordList))]
-	r.Game.Scores = make(map[string]int)
-	r.Game.GuessedPlayers = make(map[string]bool)
+	totalRotations, err := getNumOfRotation(len(playerIDs))
+	if err != nil {
+		return
+	}
 
-	// snapshot clients under lock so we can send without holding the mutex
+	rand.Shuffle(len(playerIDs), func(i, j int) { playerIDs[i], playerIDs[j] = playerIDs[j], playerIDs[i] })
+
+	r.Status = StatusInProgress
+	r.Game = GameState{
+		CurrentRound:    1,
+		CurrentRotation: 1,
+		TotalRotations:  totalRotations,
+		DrawOrder:       playerIDs,
+		DrawerIndex:     0,
+		DrawerID:        playerIDs[0],
+		CurrentWord:     wordList[rand.Intn(len(wordList))],
+		Scores:          make(map[string]int),
+		GuessedPlayers:  make(map[string]bool),
+	}
+
+	r.BroadcastEvent(EventRotationStart, rotationStartPayload{
+		RotationNumber: r.Game.CurrentRotation,
+		TotalRotations: r.Game.TotalRotations,
+		DrawOrder:      r.Game.DrawOrder,
+	})
+
+	r.broadcastRoundStart()
+}
+
+// broadcastRoundStart sends round.start to all clients, with the word only to the drawer.
+func (r *Room) broadcastRoundStart() {
 	r.mu.RLock()
 	clients := make(map[string]Sender, len(r.Clients))
 	maps.Copy(clients, r.Clients)

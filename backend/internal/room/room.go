@@ -37,14 +37,6 @@ type Player struct {
 	JoinedAt time.Time
 }
 
-type GameState struct {
-	CurrentRound   int
-	DrawerID       string
-	CurrentWord    string
-	Scores         map[string]int
-	GuessedPlayers map[string]bool // playerID → guessed correctly this round
-}
-
 type Room struct {
 	ID           string
 	HostID       string

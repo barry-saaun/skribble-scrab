@@ -1,6 +1,6 @@
 package room
 
-type Game struct {
+type GameState struct {
 	CurrentRound   int
 	DrawerID       string
 	CurrentWord    string
@@ -40,4 +40,28 @@ type roundResultPayload struct {
 type chatBroadcastPayload struct {
 	PlayerID string `json:"playerId"`
 	Text     string `json:"text"`
+}
+
+type rotationStartPayload struct {
+	RotationNumber int      `json:"rotationNumber"`
+	TotalRotations int      `json:"totalRotations"`
+	DrawOrder      []string `json:"drawOrder"`
+}
+
+type rotationCompletePayload struct {
+	RotationNumber     int            `json:"rotationNumber"`
+	Scores             map[string]int `json:"scores"`
+	RotationsRemaining int            `json:"rotationsRemaining"`
+}
+
+type roundEndPayload struct {
+	Word             string         `json:"word"`
+	NextDrawerID     string         `json:"nextDrawerId"`
+	Scores           map[string]int `json:"scores"`
+	RotationComplete bool           `json:"rotationComplete"`
+}
+
+type gameEndPayload struct {
+	Scores map[string]int `json:"scores"`
+	Winner string         `json:"winner"`
 }
