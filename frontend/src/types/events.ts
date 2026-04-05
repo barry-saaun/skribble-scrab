@@ -48,7 +48,7 @@ export interface RotationCompletePayload {
 
 export interface RoundStartPayload {
   round: number;
-  drawerId: string;
+  drawerID: string;
   word?: string; // only present for the drawer
   status: GameStatus;
 }
@@ -59,13 +59,13 @@ export interface RoundTickPayload {
 
 export interface RoundEndPayload {
   word: string;
-  nextDrawerId: string;
+  nextDrawerID: string;
   scores: Record<string, number>;
   rotationComplete: boolean;
 }
 
 export interface GuessResultPayload {
-  correctPlayerId: string;
+  correctPlayerID: string;
   word: string;
   scores: Record<string, number>;
 }
@@ -80,7 +80,7 @@ export interface DrawStrokePayload {
 }
 
 export interface ChatMessagePayload {
-  playerId: string;
+  playerID: string;
   text: string;
 }
 

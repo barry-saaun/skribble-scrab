@@ -30,19 +30,19 @@ type chatPayload struct {
 
 type roundStartPayload struct {
 	Round    int    `json:"round"`
-	DrawerID string `json:"drawerId"`
+	DrawerID string `json:"drawerID"`
 	Word     string `json:"word,omitempty"` // only populated for the drawer
 	Status   Status `json:"status"`
 }
 
 type roundResultPayload struct {
-	CorrectPlayerID string         `json:"correctPlayerId"`
+	CorrectPlayerID string         `json:"correctPlayerID"`
 	Word            string         `json:"word"`
 	Scores          map[string]int `json:"scores"`
 }
 
 type chatBroadcastPayload struct {
-	PlayerID string `json:"playerId"`
+	PlayerID string `json:"playerID"`
 	Text     string `json:"text"`
 }
 
@@ -60,7 +60,7 @@ type rotationCompletePayload struct {
 
 type roundEndPayload struct {
 	Word             string         `json:"word"`
-	NextDrawerID     string         `json:"nextDrawerId"`
+	NextDrawerID     string         `json:"nextDrawerID"`
 	Scores           map[string]int `json:"scores"`
 	RotationComplete bool           `json:"rotationComplete"`
 }
