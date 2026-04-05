@@ -131,3 +131,19 @@ func (r *Room) handlePlayerGuess(event Event) {
 		})
 	}
 }
+
+func getNumOfRotation(numOfPlayers int) (int, error) {
+	switch {
+	case numOfPlayers >= 3 && numOfPlayers <= 5:
+		return 3, nil
+	case numOfPlayers >= 6 && numOfPlayers <= 10:
+		return 2, nil
+
+	case numOfPlayers >= 10:
+		return 1, nil
+
+	default:
+		return 0, fmt.Errorf("invalid player count: %d (minimum 3)", numOfPlayers)
+
+	}
+}
