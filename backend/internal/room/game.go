@@ -2,6 +2,7 @@ package room
 
 import (
 	"encoding/json"
+	"fmt"
 	"maps"
 	"math/rand"
 	"strings"
@@ -76,7 +77,6 @@ func (r *Room) broadcastRoundStart() {
 	maps.Copy(clients, r.Clients)
 	r.mu.RUnlock()
 
-	// drawer gets the word, everyone else doesn't
 	for playerID, client := range clients {
 		word := ""
 		if playerID == r.Game.DrawerID {
@@ -95,6 +95,78 @@ func (r *Room) broadcastRoundStart() {
 	}
 }
 
+// advanceDrawer is called at the end of a round. It moves to the next drawer,
+// handles rotation completion, and ends the game when all rotations are done.
+func (r *Room) advanceDrawer(word string, scores map[string]int) {
+	nextIndex := r.Game.DrawerIndex + 1
+	rotationComplete := nextIndex >= len(r.Game.DrawOrder)
+
+	nextDrawerID := ""
+	if !rotationComplete {
+		nextDrawerID = r.Game.DrawOrder[nextIndex]
+	}
+
+	r.BroadcastEvent(EventRoundEnd, roundEndPayload{
+		Word:             word,
+		NextDrawerID:     nextDrawerID,
+		Scores:           scores,
+		RotationComplete: rotationComplete,
+	})
+
+	if rotationComplete {
+		rotationsRemaining := r.Game.TotalRotations - r.Game.CurrentRotation
+
+		r.BroadcastEvent(EventRotationComplete, rotationCompletePayload{
+			RotationNumber:     r.Game.CurrentRotation,
+			Scores:             scores,
+			RotationsRemaining: rotationsRemaining,
+		})
+
+		if rotationsRemaining == 0 {
+			r.Status = StatusFinished
+			r.BroadcastEvent(EventGameEnd, gameEndPayload{
+				Scores: scores,
+				Winner: r.findWinner(),
+			})
+			return
+		}
+
+		// start the next rotation with the same draw order, reset from the top
+		r.Game.CurrentRotation++
+		r.Game.DrawerIndex = 0
+	} else {
+		r.Game.DrawerIndex = nextIndex
+	}
+
+	r.Game.DrawerID = r.Game.DrawOrder[r.Game.DrawerIndex]
+	r.Game.CurrentWord = wordList[rand.Intn(len(wordList))]
+	r.Game.GuessedPlayers = make(map[string]bool)
+	r.Game.CurrentRound++
+
+	if rotationComplete {
+		r.BroadcastEvent(EventRotationStart, rotationStartPayload{
+			RotationNumber: r.Game.CurrentRotation,
+			TotalRotations: r.Game.TotalRotations,
+			DrawOrder:      r.Game.DrawOrder,
+		})
+	}
+
+	r.broadcastRoundStart()
+}
+
+// findWinner returns the player ID with the highest score.
+func (r *Room) findWinner() string {
+	var winner string
+	var max int
+	for playerID, score := range r.Game.Scores {
+		if score > max {
+			max = score
+			winner = playerID
+		}
+	}
+	return winner
+}
+
 func (r *Room) handleChatMessage(event Event) {
 	raw, ok := event.Payload.(json.RawMessage)
 	if !ok {
@@ -110,11 +182,6 @@ func (r *Room) handleChatMessage(event Event) {
 		PlayerID: event.PlayerID,
 		Text:     p.Text,
 	})
-}
-
-type roundEndPayload struct {
-	Word   string         `json:"word"`
-	Scores map[string]int `json:"scores"`
 }
 
 func (r *Room) handlePlayerGuess(event Event) {
@@ -150,35 +217,11 @@ func (r *Room) handlePlayerGuess(event Event) {
 		Scores:          r.Game.Scores,
 	})
 
-	// end round when all non-drawer players have guessed correctly
 	r.mu.RLock()
 	totalPlayers := len(r.Players)
 	r.mu.RUnlock()
 
 	if len(r.Game.GuessedPlayers) >= totalPlayers-1 {
-		word := r.Game.CurrentWord
-		scores := r.Game.Scores
-		r.Game = GameState{Scores: scores} // reset round state, keep scores
-		r.Status = StatusWaiting
-		r.BroadcastEvent(EventRoundEnd, roundEndPayload{
-			Word:   word,
-			Scores: scores,
-		})
-	}
-}
-
-func getNumOfRotation(numOfPlayers int) (int, error) {
-	switch {
-	case numOfPlayers >= 3 && numOfPlayers <= 5:
-		return 3, nil
-	case numOfPlayers >= 6 && numOfPlayers <= 10:
-		return 2, nil
-
-	case numOfPlayers >= 10:
-		return 1, nil
-
-	default:
-		return 0, fmt.Errorf("invalid player count: %d (minimum 3)", numOfPlayers)
-
+		r.advanceDrawer(r.Game.CurrentWord, r.Game.Scores)
 	}
 }
