@@ -3,7 +3,12 @@ package room
 import "encoding/json"
 
 func (r *Room) handleDrawStroke(event Event) {
-	if r.Status != StatusInProgress || event.PlayerID != r.Game.DrawerID {
+	if r.Status != StatusInProgress {
+		return
+	}
+
+	if event.PlayerID != r.Game.DrawerID {
+		r.sendError(event.PlayerID, ErrNotYourTurn, "only the current drawer can draw")
 		return
 	}
 
@@ -21,7 +26,12 @@ func (r *Room) handleDrawStroke(event Event) {
 }
 
 func (r *Room) handleDrawClear(event Event) {
-	if r.Status != StatusInProgress || event.PlayerID != r.Game.DrawerID {
+	if r.Status != StatusInProgress {
+		return
+	}
+
+	if event.PlayerID != r.Game.DrawerID {
+		r.sendError(event.PlayerID, ErrNotYourTurn, "only the current drawer can clear the canvas")
 		return
 	}
 

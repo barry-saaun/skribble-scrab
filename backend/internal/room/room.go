@@ -88,15 +88,6 @@ func (r *Room) Broadcast(msg []byte) {
 	}
 }
 
-type outgoingMessage struct {
-	Type    string `json:"type"`
-	Payload any    `json:"payload"`
-}
-
-type playerListPayload struct {
-	Players []playerView `json:"players"`
-}
-
 func (r *Room) BroadcastEvent(eventType EventType, payload any) {
 	b, err := json.Marshal(outgoingMessage{Type: string(eventType), Payload: payload})
 	if err != nil {
@@ -119,6 +110,23 @@ func (r *Room) BroadcastExceptSender(senderID string, msg []byte) {
 	for _, c := range clients {
 		c.Send(msg)
 	}
+}
+
+func (r *Room) sendError(playerID, code, message string) {
+	r.mu.RLock()
+	client, ok := r.Clients[playerID]
+	r.mu.RUnlock()
+
+	if !ok {
+		return
+	}
+
+	b, _ := json.Marshal(outgoingMessage{
+		Type:    string(EventError),
+		Payload: errorPayload{Code: code, Message: message},
+	})
+
+	client.Send(b)
 }
 
 func (r *Room) BroadcastPlayerList() {
