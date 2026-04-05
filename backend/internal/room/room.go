@@ -158,6 +158,10 @@ func (r *Room) Run() {
 			if r.Status == StatusInProgress {
 				r.advanceDrawer(r.Game.CurrentWord, r.Game.Scores)
 			}
+		case EventDrawStroke:
+			r.handleDrawStroke(event)
+		case EventDrawClear:
+			r.handleDrawClear(event)
 		}
 	}
 }

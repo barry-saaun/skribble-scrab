@@ -19,3 +19,12 @@ func (r *Room) handleDrawStroke(event Event) {
 
 	r.BroadcastExceptSender(event.PlayerID, b)
 }
+
+func (r *Room) handleDrawClear(event Event) {
+	if r.Status != StatusInProgress || event.PlayerID != r.Game.DrawerID {
+		return
+	}
+
+	b, _ := json.Marshal(outgoingMessage{Type: string(EventDrawClear), Payload: nil})
+	r.BroadcastExceptSender(event.PlayerID, b)
+}
