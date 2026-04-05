@@ -26,7 +26,7 @@ type chatPayload struct {
 
 // outgoing payloads
 
-type gameStatePayload struct {
+type roundStartPayload struct {
 	Round    int    `json:"round"`
 	DrawerID string `json:"drawerId"`
 	Word     string `json:"word,omitempty"` // only populated for the drawer
@@ -78,8 +78,8 @@ func (r *Room) handleGameStart(event Event) {
 			word = r.Game.CurrentWord
 		}
 		b, _ := json.Marshal(outgoingMessage{
-			Type: string(EventGameState),
-			Payload: gameStatePayload{
+			Type: string(EventRoundStart),
+			Payload: roundStartPayload{
 				Round:    r.Game.CurrentRound,
 				DrawerID: r.Game.DrawerID,
 				Word:     word,
@@ -139,7 +139,7 @@ func (r *Room) handlePlayerGuess(event Event) {
 	r.Game.Scores[event.PlayerID] += 100
 	r.Game.Scores[r.Game.DrawerID] += 50
 
-	r.BroadcastEvent(EventRoundResult, roundResultPayload{
+	r.BroadcastEvent(EventGuessResult, roundResultPayload{
 		CorrectPlayerID: event.PlayerID,
 		Word:            r.Game.CurrentWord,
 		Scores:          r.Game.Scores,

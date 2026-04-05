@@ -142,7 +142,7 @@ func (r *Room) Run() {
 			r.handleGameStart(event)
 		case EventChatMessage:
 			r.handleChatMessage(event)
-		case EventPlayerGuess:
+		case EventGuessSubmit:
 			r.handlePlayerGuess(event)
 		}
 	}
