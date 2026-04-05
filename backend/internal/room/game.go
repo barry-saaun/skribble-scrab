@@ -1,11 +1,13 @@
 package room
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"maps"
 	"math/rand"
 	"strings"
+	"time"
 )
 
 // TODO: pick a random from the db later
@@ -70,7 +72,23 @@ func (r *Room) handleGameStart(event Event) {
 	r.broadcastRoundStart()
 }
 
-// broadcastRoundStart sends round.start to all clients, with the word only to the drawer.
+func (r *Room) startRoundTimer(ctx context.Context) {
+	go func() {
+		for seconds := 60; seconds > 0; seconds-- {
+			select {
+			case <-ctx.Done():
+				return
+			case <-time.After(1 * time.Second):
+				r.Events <- Event{Type: EventRoundTick, Payload: seconds - 1}
+
+			}
+		}
+		r.Events <- Event{Type: EventRoundTimeout}
+	}()
+}
+
+// broadcastRoundStart sends round.start to all clients, with the word only to the drawer,
+// then starts the round timer.
 func (r *Room) broadcastRoundStart() {
 	r.mu.RLock()
 	clients := make(map[string]Sender, len(r.Clients))
@@ -93,11 +111,18 @@ func (r *Room) broadcastRoundStart() {
 		})
 		client.Send(b)
 	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	r.Game.Timer = cancel
+	r.startRoundTimer(ctx)
 }
 
 // advanceDrawer is called at the end of a round. It moves to the next drawer,
 // handles rotation completion, and ends the game when all rotations are done.
 func (r *Room) advanceDrawer(word string, scores map[string]int) {
+	if r.Game.Timer != nil {
+		r.Game.Timer()
+	}
 	nextIndex := r.Game.DrawerIndex + 1
 	rotationComplete := nextIndex >= len(r.Game.DrawOrder)
 

@@ -136,6 +136,13 @@ func (r *Room) Run() {
 			r.handleChatMessage(event)
 		case EventGuessSubmit:
 			r.handlePlayerGuess(event)
+		case EventRoundTick:
+			seconds, _ := event.Payload.(int)
+			r.BroadcastEvent(EventRoundTick, roundTickPayload{SecondsRemaining: seconds})
+		case EventRoundTimeout:
+			if r.Status == StatusInProgress {
+				r.advanceDrawer(r.Game.CurrentWord, r.Game.Scores)
+			}
 		}
 	}
 }

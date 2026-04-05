@@ -17,9 +17,10 @@ const (
 	EventRotationComplete EventType = "rotation.complete"
 
 	// Round lifecycle — one round = one player draws
-	EventRoundStart EventType = "round.start"
-	EventRoundTick  EventType = "round.tick"
-	EventRoundEnd   EventType = "round.end" // includes correct word, nextDrawer, rotation status
+	EventRoundStart   EventType = "round.start"
+	EventRoundTick    EventType = "round.tick"
+	EventRoundTimeout EventType = "round.timeout"
+	EventRoundEnd     EventType = "round.end" // includes correct word, nextDrawer, rotation status
 
 	// Guessing
 	EventGuessSubmit EventType = "guess.submit"

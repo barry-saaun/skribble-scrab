@@ -1,5 +1,7 @@
 package room
 
+import "context"
+
 type GameState struct {
 	CurrentRound   int
 	DrawerID       string
@@ -11,6 +13,8 @@ type GameState struct {
 	TotalRotations  int
 	DrawOrder       []string
 	DrawerIndex     int
+
+	Timer context.CancelFunc
 }
 
 // incoming payloads
@@ -64,4 +68,8 @@ type roundEndPayload struct {
 type gameEndPayload struct {
 	Scores map[string]int `json:"scores"`
 	Winner string         `json:"winner"`
+}
+
+type roundTickPayload struct {
+	SecondsRemaining int `json:"secondsRemaining"`
 }
