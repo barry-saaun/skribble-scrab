@@ -1,3 +1,5 @@
+import { ErrorPayload } from "./events";
+
 export type Role = "host" | "player" | "spectator";
 
 export type GameStatus = "waiting" | "in_progress" | "finished";
@@ -20,4 +22,6 @@ export interface GameState {
   drawerID: string | null;
   secondsRemaining: number | null;
   winner: string | null;
+
+  lastError: ErrorPayload | null;
 }
