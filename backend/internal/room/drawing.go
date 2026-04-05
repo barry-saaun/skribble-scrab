@@ -3,7 +3,7 @@ package room
 import "encoding/json"
 
 func (r *Room) handleDrawStroke(event Event) {
-	if r.Status != StatusInProgress || event.PlayerID == r.Game.DrawerID {
+	if r.Status != StatusInProgress || event.PlayerID != r.Game.DrawerID {
 		return
 	}
 
