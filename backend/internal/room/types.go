@@ -73,3 +73,17 @@ type gameEndPayload struct {
 type roundTickPayload struct {
 	SecondsRemaining int `json:"secondsRemaining"`
 }
+
+type outgoingMessage struct {
+	Type    string `json:"type"`
+	Payload any    `json:"payload"`
+}
+
+type playerListPayload struct {
+	Players []playerView `json:"players"`
+}
+
+type errorPayload struct {
+	Code    string `json:"code"`
+	Message string `json:"message"`
+}
