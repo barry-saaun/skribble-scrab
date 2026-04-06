@@ -84,6 +84,19 @@ export interface ChatMessagePayload {
   text: string;
 }
 
+// ---- Client-side log entry types ----
+
+export interface ChatEntry {
+  playerID: string;
+  text: string;
+}
+
+export interface GuessEntry {
+  playerID: string;
+  word: string;
+  correct: boolean;
+}
+
 export interface GameEndPayload {
   scores: Record<string, number>;
   winner: string;

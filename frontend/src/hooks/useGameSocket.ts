@@ -2,8 +2,10 @@
 import { useEffect, useReducer, useRef, useState } from "react";
 import { env } from "~/env";
 import type {
+  ChatEntry,
   DrawStrokePayload,
   EventType,
+  GuessEntry,
   ServerMessage,
 } from "~/types/events";
 import type { GameState } from "~/types/game";
@@ -100,6 +102,9 @@ export default function useGameSocket({
   // Kept outside GameState so the word is never accidentally passed to components
   const [drawerWord, setDrawerWord] = useState<string | null>(null);
 
+  const [chatLog, setChatLog] = useState<ChatEntry[]>([]);
+  const [guessLog, setGuessLog] = useState<GuessEntry[]>([]);
+
   useEffect(() => {
     const ws = new WebSocket(
       `${env.NEXT_PUBLIC_WS_BASE_URL}/ws?roomID=${encodeURIComponent(roomID)}&playerID=${encodeURIComponent(playerID)}`,
@@ -117,10 +122,31 @@ export default function useGameSocket({
         // Intercept the drawer's word before dispatching — keep it out of shared state
         if (msg.type === "round.start") {
           setDrawerWord(msg.payload.word ?? null);
+          // Clear logs at the start of each round
+          setChatLog([]);
+          setGuessLog([]);
         }
 
         if (msg.type === "round.end") {
           setDrawerWord(null);
+        }
+
+        if (msg.type === "chat.message") {
+          setChatLog((prev) => [
+            ...prev,
+            { playerID: msg.payload.playerID, text: msg.payload.text },
+          ]);
+        }
+
+        if (msg.type === "guess.result") {
+          setGuessLog((prev) => [
+            ...prev,
+            {
+              playerID: msg.payload.correctPlayerID,
+              word: msg.payload.word,
+              correct: true,
+            },
+          ]);
         }
 
         dispatch(msg);
@@ -153,6 +179,8 @@ export default function useGameSocket({
     gameState,
     drawerWord,
     isConnected,
+    chatLog,
+    guessLog,
     sendGameStart,
     sendGuess,
     sendChat,
