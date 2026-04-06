@@ -247,7 +247,7 @@ func (r *Room) handlePlayerGuess(event Event) {
 
 	r.Game.GuessedPlayers[event.PlayerID] = true
 	r.Game.Scores[event.PlayerID] += 100
-	r.Game.Scores[r.Game.DrawerID] += 50
+	r.Game.Scores[r.Game.DrawerID] += 25
 
 	r.BroadcastEvent(EventGuessResult, roundResultPayload{
 		CorrectPlayerID: event.PlayerID,
@@ -255,11 +255,7 @@ func (r *Room) handlePlayerGuess(event Event) {
 		Scores:          r.Game.Scores,
 	})
 
-	r.mu.RLock()
-	totalPlayers := len(r.Players)
-	r.mu.RUnlock()
-
-	if len(r.Game.GuessedPlayers) >= totalPlayers-1 {
+	if len(r.Game.GuessedPlayers) >= 1 {
 		r.advanceDrawer(r.Game.CurrentWord, r.Game.Scores)
 	}
 }
