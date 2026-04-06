@@ -1,0 +1,225 @@
+openapi: 3.0.3
+info:
+  title: Skribble Scrab API
+  version: 1.0.0
+  description: Real-time drawing and guessing game API
+
+servers:
+  - url: http://localhost:8080
+    description: Development server
+
+paths:
+  /api/health:
+    get:
+      operationId: getHealth
+      summary: Health check
+      tags: [health]
+      responses:
+        "200":
+          description: Server is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                required: [status]
+
+  /api/rooms:
+    post:
+      operationId: createRoom
+      summary: Create a room
+      tags: [rooms]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateRoomRequest"
+      responses:
+        "201":
+          description: Room created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreateRoomResponse"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/rooms/{roomID}:
+    get:
+      operationId: getRoom
+      summary: Get room details
+      tags: [rooms]
+      parameters:
+        - name: roomID
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Room details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GetRoomResponse"
+        "404":
+          description: Room not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/rooms/{roomID}/join:
+    post:
+      operationId: joinRoom
+      summary: Join a room
+      tags: [rooms]
+      parameters:
+        - name: roomID
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/JoinRoomRequest"
+      responses:
+        "201":
+          description: Joined room
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JoinRoomResponse"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Room not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: Player already in room
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+components:
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+      required: [error]
+
+    Role:
+      type: string
+      enum: [host, player, spectator]
+
+    Status:
+      type: string
+      enum: [waiting, in_progress, finished]
+
+    CreateRoomRequest:
+      type: object
+      required: [hostID, hostUsername]
+      properties:
+        hostID:
+          type: string
+        hostUsername:
+          type: string
+        hostDisplayName:
+          type: string
+
+    CreateRoomResponse:
+      type: object
+      required: [roomID, hostID, hostUsername, hostDisplayName, status, createdAt]
+      properties:
+        roomID:
+          type: string
+        hostID:
+          type: string
+        hostUsername:
+          type: string
+        hostDisplayName:
+          type: string
+        status:
+          $ref: "#/components/schemas/Status"
+        createdAt:
+          type: string
+          format: date-time
+
+    PlayerView:
+      type: object
+      required: [id, userName, displayName, role, connected]
+      properties:
+        id:
+          type: string
+        userName:
+          type: string
+        displayName:
+          type: string
+        role:
+          $ref: "#/components/schemas/Role"
+        connected:
+          type: boolean
+
+    GetRoomResponse:
+      type: object
+      required: [roomID, hostID, status, players, createdAt]
+      properties:
+        roomID:
+          type: string
+        hostID:
+          type: string
+        status:
+          $ref: "#/components/schemas/Status"
+        players:
+          type: array
+          items:
+            $ref: "#/components/schemas/PlayerView"
+        createdAt:
+          type: string
+          format: date-time
+
+    JoinRoomRequest:
+      type: object
+      required: [playerID]
+      properties:
+        playerID:
+          type: string
+        playerUsername:
+          type: string
+        playerDisplayName:
+          type: string
+
+    JoinRoomResponse:
+      type: object
+      required: [playerID, playerUsername, playerDisplayName, roomID, role]
+      properties:
+        playerID:
+          type: string
+        playerUsername:
+          type: string
+        playerDisplayName:
+          type: string
+        roomID:
+          type: string
+        role:
+          $ref: "#/components/schemas/Role"

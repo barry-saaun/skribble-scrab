@@ -46,6 +46,20 @@ const (
 	ErrAlreadyGuessed    = "ALREADY_GUESSED"
 )
 
+// Error codes for room access / join error
+const (
+	ErrRoomNotValid  = "ROOM_NOT_FOUND"
+	ErrInvalidCode   = "INVALID_CODE"
+	ErrRoomFull      = "ROOM_FULL"
+	ErrPrivateNoCode = "PRIVATE_NO_CODE"
+)
+
+// General room state error codes (might not needed now but for later)
+const (
+	ErrPlayerAlreadyInRoom = "PLAYER_ALREADY_IN_ROOM"
+	ErrUsernameInvalid     = "USERNAME_INVALID"
+)
+
 type Event struct {
 	Type     EventType
 	PlayerID string

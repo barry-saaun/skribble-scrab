@@ -6,11 +6,13 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "generate:api": "openapi-typescript openapi.yaml -o src/api/v1.d.ts"
   },
   "dependencies": {
     "@t3-oss/env-nextjs": "^0.13.11",
     "next": "16.2.2",
+    "openapi-fetch": "^0.17.0",
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "zod": "^4.3.6"
@@ -22,6 +24,7 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.2.2",
+    "openapi-typescript": "^7.13.0",
     "tailwindcss": "^4",
     "typescript": "^5"
   }

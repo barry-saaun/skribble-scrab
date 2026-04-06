@@ -1,0 +1,156 @@
+import type { GameStatus, Player } from "./game";
+
+// ---- Event type literals ----
+
+export type EventType =
+  // Presence
+  | "room.player_list"
+  | "player.joined"
+  | "player.left"
+  // Game lifecycle
+  | "game.start"
+  | "game.end"
+  // Rotation lifecycle
+  | "rotation.start"
+  | "rotation.complete"
+  // Round lifecycle
+  | "round.start"
+  | "round.tick"
+  | "round.end"
+  // Guessing
+  | "guess.submit"
+  | "guess.result"
+  // Drawing
+  | "draw.stroke"
+  | "draw.clear"
+  // Chat
+  | "chat.message"
+  // Error
+  | "error";
+
+// ---- Incoming payloads (server → client) ----
+
+export interface PlayerListPayload {
+  players: Player[];
+}
+
+export interface RotationStartPayload {
+  rotationNumber: number;
+  totalRotations: number;
+  drawOrder: string[];
+}
+
+export interface RotationCompletePayload {
+  rotationNumber: number;
+  scores: Record<string, number>;
+  rotationsRemaining: number;
+}
+
+export interface RoundStartPayload {
+  round: number;
+  drawerID: string;
+  word?: string; // only present for the drawer
+  status: GameStatus;
+}
+
+export interface RoundTickPayload {
+  secondsRemaining: number;
+}
+
+export interface RoundEndPayload {
+  word: string;
+  nextDrawerID: string;
+  scores: Record<string, number>;
+  rotationComplete: boolean;
+}
+
+export interface GuessResultPayload {
+  correctPlayerID: string;
+  word: string;
+  scores: Record<string, number>;
+}
+
+export interface DrawStrokePayload {
+  x0: number;
+  y0: number;
+  x1: number;
+  y1: number;
+  color: string;
+  width: number;
+}
+
+export interface ChatMessagePayload {
+  playerID: string;
+  text: string;
+}
+
+// ---- Client-side log entry types ----
+
+export interface ChatEntry {
+  playerID: string;
+  text: string;
+}
+
+export interface GuessEntry {
+  playerID: string;
+  word: string;
+  correct: boolean;
+}
+
+export interface GameEndPayload {
+  scores: Record<string, number>;
+  winner: string;
+}
+
+export interface ErrorPayload {
+  code: ErrorCode;
+  message: string;
+}
+
+// Mirrors backend internal/room/events.go error constants
+export const ErrorCode = {
+  // Game errors (WS)
+  NOT_HOST: "NOT_HOST",
+  GAME_ALREADY_ACTIVE: "GAME_ALREADY_ACTIVE",
+  NOT_ENOUGH_PLAYERS: "NOT_ENOUGH_PLAYERS",
+  NOT_YOUR_TURN: "NOT_YOUR_TURN",
+  ALREADY_GUESSED: "ALREADY_GUESSED",
+
+  // Room access errors (HTTP)
+  ROOM_NOT_FOUND: "ROOM_NOT_FOUND",
+  INVALID_CODE: "INVALID_CODE",
+  ROOM_FULL: "ROOM_FULL",
+  PRIVATE_NO_CODE: "PRIVATE_NO_CODE",
+
+  // General room state errors
+  PLAYER_ALREADY_IN_ROOM: "PLAYER_ALREADY_IN_ROOM",
+  USERNAME_INVALID: "USERNAME_INVALID",
+} as const;
+
+export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];
+
+// ---- Outgoing payloads (client → server) ----
+
+export interface GuessSubmitPayload {
+  word: string;
+}
+
+export interface ChatSendPayload {
+  text: string;
+}
+
+// ---- Discriminated union of all server → client messages ----
+
+export type ServerMessage =
+  | { type: "room.player_list"; payload: PlayerListPayload }
+  | { type: "rotation.start"; payload: RotationStartPayload }
+  | { type: "rotation.complete"; payload: RotationCompletePayload }
+  | { type: "round.start"; payload: RoundStartPayload }
+  | { type: "round.tick"; payload: RoundTickPayload }
+  | { type: "round.end"; payload: RoundEndPayload }
+  | { type: "guess.result"; payload: GuessResultPayload }
+  | { type: "draw.stroke"; payload: DrawStrokePayload }
+  | { type: "draw.clear"; payload: Record<string, never> }
+  | { type: "chat.message"; payload: ChatMessagePayload }
+  | { type: "game.end"; payload: GameEndPayload }
+  | { type: "error"; payload: ErrorPayload };
