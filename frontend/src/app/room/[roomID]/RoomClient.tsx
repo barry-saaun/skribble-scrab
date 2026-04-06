@@ -67,7 +67,14 @@ export default function RoomClient({
           <span className="text-xs text-neutral-400">
             Ur da real: {isHost ? "host" : "player"}
           </span>
-          <TimerPlaceholder secondsRemaining={gameState.secondsRemaining} />
+          <TimerPlaceholder
+            secondsRemaining={gameState.secondsRemaining}
+            status={gameState.status}
+            currentRound={gameState.currentRound}
+            currentRotation={gameState.currentRotation}
+            totalRotations={gameState.totalRotations}
+            playersPerRotation={gameState.drawOrder.length}
+          />
           <ConnectionBanner isConnected={isConnected} />
         </div>
       </header>
