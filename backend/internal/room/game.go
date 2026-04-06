@@ -130,6 +130,7 @@ func (r *Room) advanceDrawer(word string, scores map[string]int) {
 	if r.Game.Timer != nil {
 		r.Game.Timer()
 	}
+	r.Game.RoundEnding = false
 	nextIndex := r.Game.DrawerIndex + 1
 	rotationComplete := nextIndex >= len(r.Game.DrawOrder)
 
@@ -255,7 +256,24 @@ func (r *Room) handlePlayerGuess(event Event) {
 		Scores:          r.Game.Scores,
 	})
 
-	if len(r.Game.GuessedPlayers) >= 1 {
-		r.advanceDrawer(r.Game.CurrentWord, r.Game.Scores)
+	// Cancel the round timer and start a short ending countdown before advancing.
+	if r.Game.Timer != nil {
+		r.Game.Timer()
 	}
+	r.Game.RoundEnding = true
+	capturedRound := r.Game.CurrentRound
+	guesserID := event.PlayerID
+
+	go func() {
+		for s := 5; s >= 0; s-- {
+			r.Events <- Event{Type: EventRoundEnding, Payload: roundEndingPayload{
+				SecondsRemaining: s,
+				CorrectPlayerID:  guesserID,
+			}}
+			if s > 0 {
+				time.Sleep(1 * time.Second)
+			}
+		}
+		r.Events <- Event{Type: EventRoundEndingDone, Payload: capturedRound}
+	}()
 }

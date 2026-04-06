@@ -125,7 +125,15 @@ func (r *Room) Run() {
 			seconds, _ := event.Payload.(int)
 			r.BroadcastEvent(EventRoundTick, roundTickPayload{SecondsRemaining: seconds})
 		case EventRoundTimeout:
-			if r.Status == StatusInProgress {
+			if r.Status == StatusInProgress && !r.Game.RoundEnding {
+				r.advanceDrawer(r.Game.CurrentWord, r.Game.Scores)
+			}
+		case EventRoundEnding:
+			payload := event.Payload.(roundEndingPayload)
+			r.BroadcastEvent(EventRoundEnding, payload)
+		case EventRoundEndingDone:
+			capturedRound := event.Payload.(int)
+			if r.Status == StatusInProgress && r.Game.CurrentRound == capturedRound {
 				r.advanceDrawer(r.Game.CurrentWord, r.Game.Scores)
 			}
 		case EventDrawStroke:

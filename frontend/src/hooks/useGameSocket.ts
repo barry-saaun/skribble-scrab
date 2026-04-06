@@ -22,6 +22,8 @@ const initGameState: GameState = {
   drawOrder: [],
   drawerID: null,
   secondsRemaining: null,
+  roundEndingCountdown: null,
+  roundEndingGuesserID: null,
   winner: null,
   lastError: null,
 };
@@ -49,7 +51,16 @@ function gameReducer(state: GameState, action: ServerMessage): GameState {
         currentRound: action.payload.round,
         status: "in_progress",
         secondsRemaining: null,
+        roundEndingCountdown: null,
+        roundEndingGuesserID: null,
         lastError: null,
+      };
+
+    case "round.ending":
+      return {
+        ...state,
+        roundEndingCountdown: action.payload.secondsRemaining,
+        roundEndingGuesserID: action.payload.correctPlayerID,
       };
 
     case "round.tick":

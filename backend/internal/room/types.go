@@ -56,5 +56,6 @@ type GameState struct {
 	DrawOrder       []string
 	DrawerIndex     int
 
-	Timer context.CancelFunc
+	Timer        context.CancelFunc
+	RoundEnding  bool // true while the post-guess countdown is running
 }

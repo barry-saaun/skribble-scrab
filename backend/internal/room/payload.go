@@ -57,6 +57,11 @@ type roundTickPayload struct {
 	SecondsRemaining int `json:"secondsRemaining"`
 }
 
+type roundEndingPayload struct {
+	SecondsRemaining int    `json:"secondsRemaining"`
+	CorrectPlayerID  string `json:"correctPlayerID"`
+}
+
 type outgoingMessage struct {
 	Type    string `json:"type"`
 	Payload any    `json:"payload"`

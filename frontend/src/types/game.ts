@@ -22,6 +22,8 @@ export interface GameState {
   drawOrder: string[];
   drawerID: string | null;
   secondsRemaining: number | null;
+  roundEndingCountdown: number | null;
+  roundEndingGuesserID: string | null;
   winner: string | null;
 
   lastError: ErrorPayload | null;

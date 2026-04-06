@@ -17,6 +17,7 @@ export type EventType =
   | "round.start"
   | "round.tick"
   | "round.end"
+  | "round.ending"
   // Guessing
   | "guess.submit"
   | "guess.result"
@@ -97,6 +98,11 @@ export interface GuessEntry {
   correct: boolean;
 }
 
+export interface RoundEndingPayload {
+  secondsRemaining: number;
+  correctPlayerID: string;
+}
+
 export interface GameEndPayload {
   scores: Record<string, number>;
   winner: string;
@@ -152,5 +158,6 @@ export type ServerMessage =
   | { type: "draw.stroke"; payload: DrawStrokePayload }
   | { type: "draw.clear"; payload: Record<string, never> }
   | { type: "chat.message"; payload: ChatMessagePayload }
+  | { type: "round.ending"; payload: RoundEndingPayload }
   | { type: "game.end"; payload: GameEndPayload }
   | { type: "error"; payload: ErrorPayload };
