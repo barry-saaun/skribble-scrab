@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import useGameSocket from "~/hooks/useGameSocket";
 import PlayersListPlaceholder from "~/app/components/PlayersList";
 import CanvasPlaceholder from "~/app/components/Canvas";
@@ -7,6 +8,8 @@ import ChatBox from "~/app/components/ChatBox";
 import GuessBox from "~/app/components/GuessBox";
 import TimerPlaceholder from "~/app/components/Timer";
 import ScoreBoardPlaceholder from "~/app/components/ScoreBoard";
+import GameEndModal from "~/app/components/GameEndModal";
+import RoundEndingOverlay from "~/app/components/RoundEndingOverlay";
 
 // TODO: remove later, dev purpose only
 function ConnectionBanner({ isConnected }: { isConnected: boolean }) {
@@ -43,6 +46,8 @@ export default function RoomClient({
     sendGuess,
   } = useGameSocket({ roomID, playerID });
 
+  const [gameEndDismissed, setGameEndDismissed] = useState(false);
+
   const isHost =
     playerID === gameState.players.find((p) => p.role === "host")?.id;
 
@@ -51,7 +56,15 @@ export default function RoomClient({
   const isDrawer = playerID === gameState.drawerID;
 
   return (
-    <main className="min-h-screen bg-neutral-950 text-neutral-100 flex flex-col">
+    <main className="h-screen overflow-hidden bg-neutral-950 text-neutral-100 flex flex-col">
+      {gameState.status === "finished" && gameState.winner && !gameEndDismissed && (
+        <GameEndModal
+          winner={gameState.winner}
+          scores={gameState.scores}
+          players={gameState.players}
+          onClose={() => setGameEndDismissed(true)}
+        />
+      )}
       {/* Header */}
       <header className="flex items-center justify-between px-6 py-3 border-b border-neutral-800">
         <div className="flex items-center gap-3">
@@ -119,11 +132,20 @@ export default function RoomClient({
         </aside>
 
         {/* Center — canvas */}
-        <div className="flex flex-col flex-1 gap-4 min-w-0">
+        <div className="relative flex flex-col flex-1 gap-4 min-w-0">
           <CanvasPlaceholder
             drawerID={gameState.drawerID}
             myPlayerID={playerID}
           />
+          {gameState.roundEndingCountdown !== null &&
+            gameState.roundEndingGuesserID !== null &&
+            gameState.status !== "finished" && (
+              <RoundEndingOverlay
+                secondsRemaining={gameState.roundEndingCountdown}
+                guesserID={gameState.roundEndingGuesserID}
+                players={gameState.players}
+              />
+            )}
         </div>
 
         {/* Right sidebar — guesses + chat */}
