@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
 import useGameSocket from "~/hooks/useGameSocket";
 import PlayersListPlaceholder from "~/app/components/PlayersList";
 import CanvasPlaceholder from "~/app/components/Canvas";
@@ -47,6 +48,14 @@ export default function RoomClient({
   } = useGameSocket({ roomID, playerID });
 
   const [gameEndDismissed, setGameEndDismissed] = useState(false);
+
+  useEffect(() => {
+    if (gameState.lastError) {
+      toast.error(gameState.lastError.message, {
+        description: gameState.lastError.code,
+      });
+    }
+  }, [gameState.lastError]);
 
   const isHost =
     playerID === gameState.players.find((p) => p.role === "host")?.id;
