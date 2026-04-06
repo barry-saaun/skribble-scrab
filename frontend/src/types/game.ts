@@ -7,6 +7,7 @@ export type GameStatus = "waiting" | "in_progress" | "finished";
 export interface Player {
   id: string;
   userName: string;
+  displayName: string;
   role: Role;
   connected: boolean;
 }

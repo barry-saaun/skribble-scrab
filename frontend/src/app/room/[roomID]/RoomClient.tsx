@@ -36,6 +36,14 @@ export default function RoomClient({
     playerID,
   });
 
+  console.log(`total num of rotation: ${gameState.totalRotations}`);
+
+  const isHost =
+    playerID === gameState.players.find((p) => p.role === "host")?.id;
+
+  const drawer = gameState.players.find((p) => p.id === gameState.drawerID);
+  const drawerName = drawer?.displayName ?? drawer?.userName ?? null;
+
   return (
     <main className="min-h-screen bg-neutral-950 text-neutral-100 flex flex-col">
       {/* Header */}
@@ -45,7 +53,14 @@ export default function RoomClient({
           <span className="font-mono text-xs text-neutral-500">{roomID}</span>
         </div>
         <div className="flex items-center gap-4">
-          <span className="text-xs text-neutral-400">{username}</span>
+          {gameState.status === "in_progress" && (
+            <span className="text-xs text-neutral-400">
+              Current Drawer: {drawerName}
+            </span>
+          )}
+          <span className="text-xs text-neutral-400">
+            Ur da real: {isHost ? "host" : "player"}
+          </span>
           <TimerPlaceholder secondsRemaining={gameState.secondsRemaining} />
           <ConnectionBanner isConnected={isConnected} />
         </div>
@@ -55,18 +70,21 @@ export default function RoomClient({
       <div className="flex flex-1 gap-4 p-4 min-h-0">
         {/* Left sidebar — players + scores */}
         <aside className="w-52 flex flex-col gap-4 shrink-0">
-          <PlayersListPlaceholder playerCount={gameState.players.length} />
+          <PlayersListPlaceholder players={gameState.players} />
           <ScoreBoardPlaceholder scores={gameState.scores} />
 
           {/* Host-only start button — visible while waiting */}
-          {gameState.status === "waiting" && (
-            <button
-              onClick={sendGameStart}
-              className="rounded bg-blue-700 px-4 py-2 text-sm font-semibold hover:bg-blue-600"
-            >
-              Start Game
-            </button>
-          )}
+          {gameState.status === "waiting" &&
+            (isHost ? (
+              <button
+                onClick={sendGameStart}
+                className="rounded bg-blue-700 px-4 py-2 text-sm font-semibold hover:bg-blue-600"
+              >
+                Start Game
+              </button>
+            ) : (
+              <button>Wait for the host to start the game...</button>
+            ))}
 
           {/* Drawer word — only shown to the drawer */}
           {drawerWord && (

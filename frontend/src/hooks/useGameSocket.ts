@@ -1,7 +1,11 @@
 "use client";
 import { useEffect, useReducer, useRef, useState } from "react";
 import { env } from "~/env";
-import type { DrawStrokePayload, EventType, ServerMessage } from "~/types/events";
+import type {
+  DrawStrokePayload,
+  EventType,
+  ServerMessage,
+} from "~/types/events";
 import type { GameState } from "~/types/game";
 
 // ---- Initial state ----
@@ -36,6 +40,7 @@ function gameReducer(state: GameState, action: ServerMessage): GameState {
       };
 
     case "round.start":
+      console.log("rotation.start received", action.payload);
       return {
         ...state,
         drawerID: action.payload.drawerID,
@@ -140,7 +145,8 @@ export default function useGameSocket({
   const sendGameStart = () => send("game.start");
   const sendGuess = (word: string) => send("guess.submit", { word });
   const sendChat = (text: string) => send("chat.message", { text });
-  const sendStroke = (payload: DrawStrokePayload) => send("draw.stroke", payload);
+  const sendStroke = (payload: DrawStrokePayload) =>
+    send("draw.stroke", payload);
   const sendClear = () => send("draw.clear");
 
   return {
