@@ -23,23 +23,25 @@ const (
 )
 
 type Player struct {
-	ID       string
-	Username string
-	Role     Role
-	JoinedAt time.Time
+	ID          string // UUID -> system/logic key
+	Username    string // for unique human identifier (friend requests ,lookups)
+	DisplayName string // what's shown in gmae UI
+	Role        Role
+	JoinedAt    time.Time
 }
 
 type Room struct {
-	ID           string
-	HostID       string
-	HostUsername string
-	Game         GameState
-	Players      map[string]*Player
-	Clients      map[string]Sender
-	Events       chan Event
-	Status       Status
-	CreatedAt    time.Time
-	mu           sync.RWMutex
+	ID              string
+	HostID          string
+	HostUsername    string
+	HostDisplayName string
+	Game            GameState
+	Players         map[string]*Player
+	Clients         map[string]Sender
+	Events          chan Event
+	Status          Status
+	CreatedAt       time.Time
+	mu              sync.RWMutex
 }
 
 type GameState struct {
