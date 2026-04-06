@@ -90,9 +90,31 @@ export interface GameEndPayload {
 }
 
 export interface ErrorPayload {
-  code: string;
+  code: ErrorCode;
   message: string;
 }
+
+// Mirrors backend internal/room/events.go error constants
+export const ErrorCode = {
+  // Game errors (WS)
+  NOT_HOST: "NOT_HOST",
+  GAME_ALREADY_ACTIVE: "GAME_ALREADY_ACTIVE",
+  NOT_ENOUGH_PLAYERS: "NOT_ENOUGH_PLAYERS",
+  NOT_YOUR_TURN: "NOT_YOUR_TURN",
+  ALREADY_GUESSED: "ALREADY_GUESSED",
+
+  // Room access errors (HTTP)
+  ROOM_NOT_FOUND: "ROOM_NOT_FOUND",
+  INVALID_CODE: "INVALID_CODE",
+  ROOM_FULL: "ROOM_FULL",
+  PRIVATE_NO_CODE: "PRIVATE_NO_CODE",
+
+  // General room state errors
+  PLAYER_ALREADY_IN_ROOM: "PLAYER_ALREADY_IN_ROOM",
+  USERNAME_INVALID: "USERNAME_INVALID",
+} as const;
+
+export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];
 
 // ---- Outgoing payloads (client → server) ----
 
