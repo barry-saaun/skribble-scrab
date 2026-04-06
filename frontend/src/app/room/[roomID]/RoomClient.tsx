@@ -3,7 +3,8 @@
 import useGameSocket from "~/hooks/useGameSocket";
 import PlayersListPlaceholder from "~/app/components/PlayersList";
 import CanvasPlaceholder from "~/app/components/Canvas";
-import ChatBoxPlaceholder from "~/app/components/ChatBox";
+import ChatBox from "~/app/components/ChatBox";
+import GuessBox from "~/app/components/GuessBox";
 import TimerPlaceholder from "~/app/components/Timer";
 import ScoreBoardPlaceholder from "~/app/components/ScoreBoard";
 
@@ -118,9 +119,19 @@ export default function RoomClient({
           />
         </div>
 
-        {/* Right sidebar — chat/guess */}
-        <aside className="w-64 flex flex-col gap-4 shrink-0">
-          <ChatBoxPlaceholder />
+        {/* Right sidebar — guesses + chat */}
+        <aside className="w-64 flex flex-col gap-3 shrink-0 min-h-0">
+          <GuessBox
+            guesses={guessLog}
+            players={gameState.players}
+            isDrawer={isDrawer}
+            onGuess={sendGuess}
+          />
+          <ChatBox
+            messages={chatLog}
+            players={gameState.players}
+            onSend={sendChat}
+          />
         </aside>
       </div>
     </main>
