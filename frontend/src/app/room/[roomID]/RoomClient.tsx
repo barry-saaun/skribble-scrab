@@ -31,18 +31,23 @@ export default function RoomClient({
   playerID: string;
   username: string;
 }) {
-  const { gameState, drawerWord, isConnected, sendGameStart } = useGameSocket({
-    roomID,
-    playerID,
-  });
-
-  console.log(`total num of rotation: ${gameState.totalRotations}`);
+  const {
+    gameState,
+    drawerWord,
+    isConnected,
+    chatLog,
+    guessLog,
+    sendGameStart,
+    sendChat,
+    sendGuess,
+  } = useGameSocket({ roomID, playerID });
 
   const isHost =
     playerID === gameState.players.find((p) => p.role === "host")?.id;
 
   const drawer = gameState.players.find((p) => p.id === gameState.drawerID);
-  const drawerName = drawer?.displayName ?? drawer?.userName ?? null;
+  const drawerName = drawer?.userName ?? null;
+  const isDrawer = playerID === gameState.drawerID;
 
   return (
     <main className="min-h-screen bg-neutral-950 text-neutral-100 flex flex-col">
@@ -71,19 +76,29 @@ export default function RoomClient({
         {/* Left sidebar — players + scores */}
         <aside className="w-52 flex flex-col gap-4 shrink-0">
           <PlayersListPlaceholder players={gameState.players} />
-          <ScoreBoardPlaceholder scores={gameState.scores} />
+          <ScoreBoardPlaceholder
+            scores={gameState.scores}
+            players={gameState.players}
+          />
 
           {/* Host-only start button — visible while waiting */}
           {gameState.status === "waiting" &&
             (isHost ? (
               <button
                 onClick={sendGameStart}
-                className="rounded bg-blue-700 px-4 py-2 text-sm font-semibold hover:bg-blue-600"
+                className="rounded border border-yellow-600 bg-yellow-400 px-4 py-2 text-sm font-bold text-yellow-950 hover:bg-yellow-300 transition-colors"
               >
                 Start Game
               </button>
             ) : (
-              <button>Wait for the host to start the game...</button>
+              <div className="rounded border border-yellow-700 bg-yellow-950 px-3 py-3 flex flex-col gap-1">
+                <p className="text-yellow-300 text-xs font-semibold uppercase tracking-wide">
+                  Waiting
+                </p>
+                <p className="text-yellow-200/70 text-xs leading-snug">
+                  The host will start the game soon…
+                </p>
+              </div>
             ))}
 
           {/* Drawer word — only shown to the drawer */}
