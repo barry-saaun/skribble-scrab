@@ -18,14 +18,10 @@ const SIDEBAR: { field: string; description: string }[] = [
   { field: "Max Players", description: "10" },
 ];
 
-export function Lobby({
-  searchParams,
-}: {
-  searchParams: { error?: string; code?: string };
-}) {
+export function Lobby() {
   const [activeTab, setActiveTab] = useState<Tab>("browse");
   const [defaultDisplayName, setDefaultDisplayName] = useState("");
-  const [codeInput, setCodeInput] = useState(searchParams.code || "");
+  const [codeInput, setCodeInput] = useState<string[]>(Array(6).fill(""));
 
   const tabContent = (
     <>
@@ -40,7 +36,6 @@ export function Lobby({
           defaultDisplayName={defaultDisplayName}
           codeInput={codeInput}
           setCodeInput={setCodeInput}
-          error={searchParams.error}
         />
       )}
     </>

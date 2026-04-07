@@ -1,5 +1,5 @@
+import React from "react";
 import { createRoom, joinRoomAction } from "../actions";
-import { ErrorCode, errorMessages } from "~/types/events";
 
 const PLACEHOLDER_ROOMS = [
   {
@@ -49,11 +49,11 @@ function BrowseRoomsTab({
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-4">
+      <div className="mb-4 flex items-center justify-between">
         <p className="text-xs uppercase tracking-widest text-muted-foreground">
           {"//"} {PLACEHOLDER_ROOMS.length} ACTIVE ROOMS
         </p>
-        <button className="border-2 border-foreground px-3 py-1 text-xs font-bold uppercase hover:bg-foreground hover:text-background transition-colors cursor-pointer">
+        <button className="cursor-pointer border-2 border-foreground px-3 py-1 text-xs font-bold uppercase transition-colors hover:bg-foreground hover:text-background">
           REFRESH
         </button>
       </div>
@@ -62,10 +62,10 @@ function BrowseRoomsTab({
         {PLACEHOLDER_ROOMS.map((room) => (
           <div
             key={room.code}
-            className="border-2 border-foreground p-4 flex items-center justify-between shadow-[4px_4px_0_0_hsl(var(--foreground))]"
+            className="flex items-center justify-between border-2 border-foreground p-4 shadow-[4px_4px_0_0_hsl(var(--foreground))]"
           >
             <div>
-              <div className="flex items-center gap-2 flex-wrap">
+              <div className="flex flex-wrap items-center gap-2">
                 <h3 className="font-bold uppercase">{room.name}</h3>
                 <span
                   className={`border px-2 py-0.5 text-xs font-bold uppercase ${
@@ -77,25 +77,27 @@ function BrowseRoomsTab({
                   {room.status}
                 </span>
               </div>
-              <p className="text-xs text-muted-foreground mt-1">
+              <p className="mt-1 text-xs text-muted-foreground">
                 {room.players}/{room.maxPlayers} PLAYERS &nbsp;•&nbsp; ROUND{" "}
                 {room.round}/{room.maxRounds} &nbsp;•&nbsp; {room.code}
               </p>
-              <div className="flex gap-1 mt-2">
+              <div className="mt-2 flex gap-1">
                 {[...Array(room.maxPlayers)].map((_, i) => (
                   <div
                     key={i}
-                    className={`h-2 w-4 ${i < room.players ? "bg-accent" : "bg-border"}`}
+                    className={`h-2 w-4 ${
+                      i < room.players ? "bg-accent" : "bg-border"
+                    }`}
                   />
                 ))}
               </div>
             </div>
             <button
               disabled={isDisabled}
-              className={`border-2 px-4 py-2 text-xs font-bold uppercase transition-all flex-shrink-0 ml-4 ${
+              className={`ml-4 shrink-0 border-2 px-4 py-2 text-xs font-bold uppercase transition-all ${
                 isDisabled
-                  ? "border-muted bg-muted text-muted-foreground cursor-not-allowed opacity-50"
-                  : "border-accent bg-accent text-accent-foreground hover:opacity-90 cursor-pointer"
+                  ? "cursor-not-allowed border-muted bg-muted text-muted-foreground opacity-50"
+                  : "cursor-pointer border-accent bg-accent text-accent-foreground hover:opacity-90"
               }`}
             >
               {room.status === "WAITING" ? "JOIN" : "SPECTATE"}
@@ -104,20 +106,19 @@ function BrowseRoomsTab({
         ))}
       </div>
 
-      {/* Quick Play */}
-      <div className="border-2 border-foreground p-4 flex items-center justify-between mt-4 shadow-[4px_4px_0_0_hsl(var(--foreground))]">
+      <div className="mt-4 flex items-center justify-between border-2 border-foreground p-4 shadow-[4px_4px_0_0_hsl(var(--foreground))]">
         <div>
           <h3 className="font-bold uppercase">QUICK PLAY</h3>
-          <p className="text-xs text-muted-foreground mt-1 uppercase tracking-widest">
+          <p className="mt-1 text-xs uppercase tracking-widest text-muted-foreground">
             DROP INTO THE BEST AVAILABLE ROOM INSTANTLY
           </p>
         </div>
         <button
           disabled={isDisabled}
-          className={`border-2 px-4 py-2 text-xs font-bold uppercase transition-all flex-shrink-0 ml-4 ${
+          className={`ml-4 shrink-0 border-2 px-4 py-2 text-xs font-bold uppercase transition-all ${
             isDisabled
-              ? "border-muted bg-muted text-muted-foreground cursor-not-allowed opacity-50"
-              : "border-accent bg-accent text-accent-foreground hover:opacity-90 cursor-pointer"
+              ? "cursor-not-allowed border-muted bg-muted text-muted-foreground opacity-50"
+              : "cursor-pointer border-accent bg-accent text-accent-foreground hover:opacity-90"
           }`}
         >
           QUICK PLAY
@@ -132,7 +133,7 @@ function CreateRoomTab({ defaultDisplayName }: { defaultDisplayName: string }) {
 
   return (
     <div className="flex justify-center">
-      <form action={createRoom} className="space-y-4 w-full max-w-md">
+      <form action={createRoom} className="w-full max-w-md space-y-4">
         <input
           type="hidden"
           name="displayName"
@@ -140,30 +141,30 @@ function CreateRoomTab({ defaultDisplayName }: { defaultDisplayName: string }) {
         />
 
         <div>
-          <label className="text-xs uppercase tracking-widest text-muted-foreground block mb-2">
+          <label className="mb-2 block text-xs uppercase tracking-widest text-muted-foreground">
             {"//"} ROOM SETTINGS
           </label>
           <div className="grid grid-cols-3 gap-3">
             <div className="border-2 border-foreground p-4 text-center">
-              <div className="text-muted-foreground text-xs uppercase tracking-widest mb-2">
+              <div className="mb-2 text-xs uppercase tracking-widest text-muted-foreground">
                 Rounds
               </div>
-              <div className="text-accent font-bold">8</div>
+              <div className="font-bold text-accent">8</div>
             </div>
             <div className="border-2 border-foreground p-4 text-center">
-              <div className="text-muted-foreground text-xs uppercase tracking-widest mb-2">
+              <div className="mb-2 text-xs uppercase tracking-widest text-muted-foreground">
                 Time Per Turn
               </div>
-              <div className="text-accent font-bold">60S</div>
+              <div className="font-bold text-accent">60S</div>
             </div>
             <div className="border-2 border-foreground p-4 text-center">
-              <div className="text-muted-foreground text-xs uppercase tracking-widest mb-2">
+              <div className="mb-2 text-xs uppercase tracking-widest text-muted-foreground">
                 Hint Delay
               </div>
-              <div className="text-accent font-bold">30S</div>
+              <div className="font-bold text-accent">30S</div>
             </div>
           </div>
-          <p className="text-xs text-muted-foreground mt-3 opacity-50">
+          <p className="mt-3 text-xs text-muted-foreground opacity-50">
             {"//"} CONFIGURATION OPTIONS COMING SOON
           </p>
         </div>
@@ -173,8 +174,8 @@ function CreateRoomTab({ defaultDisplayName }: { defaultDisplayName: string }) {
           disabled={isDisabled}
           className={`w-full border-2 px-4 py-3 text-sm font-bold uppercase transition-all ${
             isDisabled
-              ? "border-muted bg-muted text-muted-foreground cursor-not-allowed opacity-50"
-              : "border-foreground bg-foreground text-background hover:bg-accent hover:border-accent hover:text-accent-foreground cursor-pointer"
+              ? "cursor-not-allowed border-muted bg-muted text-muted-foreground opacity-50"
+              : "cursor-pointer border-foreground bg-foreground text-background hover:border-accent hover:bg-accent hover:text-accent-foreground"
           }`}
         >
           CREATE ROOM &amp; JOIN
@@ -188,58 +189,33 @@ function JoinByCodeTab({
   defaultDisplayName,
   codeInput,
   setCodeInput,
-  error,
 }: {
   defaultDisplayName: string;
-  codeInput: string;
-  setCodeInput: (value: string) => void;
-  error?: string;
+  codeInput: string[];
+  setCodeInput: (value: string[]) => void;
 }) {
-  const isDisabled = !defaultDisplayName.trim() || codeInput.length !== 6;
+  const roomCode = codeInput.join("");
+  const isDisabled =
+    !defaultDisplayName.trim() || codeInput.some((char) => !char);
 
   return (
     <div className="flex justify-center">
-      <form action={joinRoomAction} className="space-y-6 w-full max-w-md">
-        {error && (
-          <div className="border-2 border-destructive bg-background p-3">
-            <p className="text-sm text-destructive font-mono">
-              {errorMessages[error as ErrorCode] ?? "Something went wrong."}
-            </p>
-          </div>
-        )}
-
+      <form action={joinRoomAction} className="w-full max-w-md space-y-6">
         <div>
-          <label className="text-xs uppercase tracking-widest text-muted-foreground block mb-4">
+          <label className="mb-4 block text-xs uppercase tracking-widest text-muted-foreground">
             {"//"} ENTER ROOM ACCESS CODE
           </label>
+
           <RoomCodeInput value={codeInput} onChange={setCodeInput} />
-          <p className="text-xs text-muted-foreground mt-4 text-center">
+
+          <p className="mt-4 text-center text-xs text-muted-foreground">
             ASK THE ROOM HOST FOR THE CODE.
             <br />
             CODES ARE CASE-SENSITIVE.
           </p>
         </div>
 
-        {/* <div> */}
-        {/*   <label */}
-        {/*     htmlFor="displayName" */}
-        {/*     className="text-xs uppercase tracking-widest text-muted-foreground block mb-2" */}
-        {/*   > */}
-        {/*     {"//"} YOUR NAME */}
-        {/*   </label> */}
-        {/*   <input */}
-        {/*     id="displayName" */}
-        {/*     name="displayName" */}
-        {/*     type="text" */}
-        {/*     required */}
-        {/*     maxLength={24} */}
-        {/*     value={displayName} */}
-        {/*     onChange={(e) => setDisplayName(e.target.value)} */}
-        {/*     className="w-full border-2 border-foreground bg-input px-3 py-2 text-sm  tracking-wider placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:ring-offset-background" */}
-        {/*   /> */}
-        {/* </div> */}
-
-        <input type="hidden" name="roomCode" value={codeInput} />
+        <input type="hidden" name="roomCode" value={roomCode} />
         <input type="hidden" name="displayName" value={defaultDisplayName} />
 
         <button
@@ -247,8 +223,8 @@ function JoinByCodeTab({
           disabled={isDisabled}
           className={`w-full border-2 px-4 py-3 text-sm font-bold uppercase transition-all ${
             isDisabled
-              ? "border-muted bg-muted text-muted-foreground cursor-not-allowed opacity-50"
-              : "border-foreground bg-accent text-accent-foreground hover:opacity-90 cursor-pointer"
+              ? "cursor-not-allowed border-muted bg-muted text-muted-foreground opacity-50"
+              : "cursor-pointer border-foreground bg-accent text-accent-foreground hover:opacity-90"
           }`}
         >
           JOIN ROOM
@@ -262,27 +238,46 @@ function RoomCodeInput({
   value,
   onChange,
 }: {
-  value: string;
-  onChange: (value: string) => void;
+  value: string[];
+  onChange: (value: string[]) => void;
 }) {
-  const handleKeyDown = (e: React.KeyboardEvent, index: number) => {
-    if (e.key === "Backspace") {
-      e.preventDefault();
-      const newValue = value.slice(0, index) + value.slice(index + 1);
-      onChange(newValue);
-      if (index > 0) {
-        document.getElementById(`code-input-${index - 1}`)?.focus();
-      }
-    } else if (e.key === "ArrowLeft") {
-      e.preventDefault();
-      if (index > 0) {
-        document.getElementById(`code-input-${index - 1}`)?.focus();
-      }
-    } else if (e.key === "ArrowRight") {
-      e.preventDefault();
-      if (index < 5) {
-        document.getElementById(`code-input-${index + 1}`)?.focus();
-      }
+  const inputRefs = React.useRef<Array<HTMLInputElement | null>>([]);
+  const [isAllSelected, setIsAllSelected] = React.useState(false);
+
+  const focusInput = (index: number) => {
+    const input = inputRefs.current[index];
+    if (!input) return;
+    input.focus();
+    input.select();
+  };
+
+  const clearAll = () => {
+    onChange(Array(6).fill(""));
+  };
+
+  const updateSlot = (index: number, char: string) => {
+    const next = [...value];
+    next[index] = char;
+    onChange(next);
+  };
+
+  const clearSlot = (index: number) => {
+    const next = [...value];
+    next[index] = "";
+    onChange(next);
+  };
+
+  const selectAllSlots = () => {
+    setIsAllSelected(true);
+
+    inputRefs.current.forEach((input) => {
+      input?.select();
+    });
+  };
+
+  const clearAllSelection = () => {
+    if (isAllSelected) {
+      setIsAllSelected(false);
     }
   };
 
@@ -290,44 +285,185 @@ function RoomCodeInput({
     e: React.ChangeEvent<HTMLInputElement>,
     index: number,
   ) => {
-    const char = e.currentTarget.value.slice(-1);
+    const raw = e.target.value;
+    const char = raw.slice(-1);
 
-    if (!/^[A-Za-z0-9]?$/.test(char)) return;
+    if (!char) {
+      clearSlot(index);
+      clearAllSelection();
+      return;
+    }
 
-    const newValue = value.slice(0, index) + char + value.slice(index + 1);
-    onChange(newValue);
+    if (!/^[A-Za-z0-9]$/.test(char)) {
+      return;
+    }
 
-    if (char && index < 5) {
-      document.getElementById(`code-input-${index + 1}`)?.focus();
+    if (isAllSelected) {
+      const next = Array(6).fill("");
+      next[0] = char;
+      onChange(next);
+      setIsAllSelected(false);
+
+      requestAnimationFrame(() => {
+        focusInput(1);
+      });
+
+      return;
+    }
+
+    updateSlot(index, char);
+    clearAllSelection();
+
+    if (index < 5) {
+      requestAnimationFrame(() => {
+        focusInput(index + 1);
+      });
     }
   };
 
-  const handlePaste = (e: React.ClipboardEvent, index: number) => {
-    e.preventDefault();
-    const pasted = e.clipboardData
-      .getData("text")
-      .replace(/[^A-Za-z0-9]/g, "")
-      .slice(0, 6 - index);
-    if (!pasted) return;
-    const newValue = (
-      value.slice(0, index) +
-      pasted +
-      value.slice(index + pasted.length)
-    ).slice(0, 6);
-    onChange(newValue);
-    const nextIndex = Math.min(index + pasted.length, 5);
-    document.getElementById(`code-input-${nextIndex}`)?.focus();
+  const handleKeyDown = (
+    e: React.KeyboardEvent<HTMLInputElement>,
+    index: number,
+  ) => {
+    const isSelectAllShortcut =
+      (e.metaKey || e.ctrlKey) &&
+      !e.shiftKey &&
+      !e.altKey &&
+      e.key.toLowerCase() === "a";
+
+    if (isSelectAllShortcut) {
+      e.preventDefault();
+      selectAllSlots();
+      return;
+    }
+
+    if ((e.metaKey || e.ctrlKey || e.altKey) && !isSelectAllShortcut) {
+      return;
+    }
+
+    if (e.key === "Backspace" || e.key === "Delete") {
+      e.preventDefault();
+
+      if (isAllSelected) {
+        clearAll();
+        setIsAllSelected(false);
+        requestAnimationFrame(() => {
+          focusInput(0);
+        });
+        return;
+      }
+
+      if (value[index]) {
+        clearSlot(index);
+        return;
+      }
+
+      if (index > 0) {
+        clearSlot(index - 1);
+
+        requestAnimationFrame(() => {
+          focusInput(index - 1);
+        });
+      }
+
+      return;
+    }
+
+    if (e.key === "ArrowLeft") {
+      e.preventDefault();
+      clearAllSelection();
+
+      if (index > 0) {
+        focusInput(index - 1);
+      }
+
+      return;
+    }
+
+    if (e.key === "ArrowRight") {
+      e.preventDefault();
+      clearAllSelection();
+
+      if (index < 5) {
+        focusInput(index + 1);
+      }
+
+      return;
+    }
+
+    if (e.key === "Tab") {
+      clearAllSelection();
+      return;
+    }
   };
 
-  const slots = Array.from({ length: 6 }, (_, i) => value[i] || "");
+  const handlePaste = (
+    e: React.ClipboardEvent<HTMLInputElement>,
+    index: number,
+  ) => {
+    e.preventDefault();
+
+    const pasted = e.clipboardData.getData("text").replace(/[^A-Za-z0-9]/g, "");
+
+    if (!pasted) return;
+
+    const startIndex = isAllSelected ? 0 : index;
+    const next = isAllSelected ? Array(6).fill("") : [...value];
+    const sliced = pasted.slice(0, 6 - startIndex);
+
+    for (let i = 0; i < sliced.length; i += 1) {
+      next[startIndex + i] = sliced[i];
+    }
+
+    onChange(next);
+    setIsAllSelected(false);
+
+    const nextIndex = Math.min(startIndex + sliced.length, 5);
+
+    requestAnimationFrame(() => {
+      focusInput(nextIndex);
+    });
+  };
+
+  const handleCopy = (e: React.ClipboardEvent<HTMLInputElement>) => {
+    if (!isAllSelected) return;
+
+    e.preventDefault();
+    e.clipboardData.setData("text/plain", value.join(""));
+  };
+
+  const handleCut = (e: React.ClipboardEvent<HTMLInputElement>) => {
+    if (!isAllSelected) return;
+
+    e.preventDefault();
+    e.clipboardData.setData("text/plain", value.join(""));
+    clearAll();
+    setIsAllSelected(false);
+
+    requestAnimationFrame(() => {
+      focusInput(0);
+    });
+  };
+
+  const handleFocus = (index: number) => {
+    if (isAllSelected) {
+      setIsAllSelected(false);
+    }
+
+    requestAnimationFrame(() => {
+      inputRefs.current[index]?.select();
+    });
+  };
 
   return (
     <div className="border-2 border-foreground bg-input p-8">
-      <div className="flex justify-center gap-6 mb-2">
-        {slots.map((char, i) => (
+      <div className="mb-2 flex justify-center gap-6">
+        {value.map((char, i) => (
           <input
             key={i}
-            id={`code-input-${i}`}
+            ref={(el) => {
+              inputRefs.current[i] = el;
+            }}
             type="text"
             inputMode="text"
             maxLength={1}
@@ -335,12 +471,18 @@ function RoomCodeInput({
             onChange={(e) => handleChange(e, i)}
             onKeyDown={(e) => handleKeyDown(e, i)}
             onPaste={(e) => handlePaste(e, i)}
-            className="w-12 h-12 text-center text-3xl font-bold text-accent bg-transparent outline-none cursor-text"
+            onCopy={handleCopy}
+            onCut={handleCut}
+            onFocus={() => handleFocus(i)}
+            className={`h-12 w-12 cursor-text bg-transparent text-center text-3xl font-bold outline-none ${
+              isAllSelected ? "text-accent ring-2 ring-accent" : "text-accent"
+            }`}
           />
         ))}
       </div>
+
       <div className="flex justify-center gap-6 text-muted-foreground">
-        {slots.map((_, i) => (
+        {value.map((_, i) => (
           <div key={i} className="w-12 text-center text-lg leading-none">
             _
           </div>
