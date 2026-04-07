@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import { createRoom } from "../actions";
 import { joinRoomAction } from "../join/actions";
 import { ErrorCode, errorMessages } from "~/types/events";
@@ -191,6 +192,7 @@ function JoinByCodeTab({
         {/* </div> */}
 
         <input type="hidden" name="roomCode" value={codeInput} />
+        <input type="hidden" name="displayName" value={defaultDisplayName} />
 
         <button
           type="submit"
@@ -252,6 +254,19 @@ function RoomCodeInput({
     }
   };
 
+  const handlePaste = (e: React.ClipboardEvent, index: number) => {
+    e.preventDefault();
+    const pasted = e.clipboardData
+      .getData("text")
+      .replace(/[^A-Za-z0-9]/g, "")
+      .slice(0, 6 - index);
+    if (!pasted) return;
+    const newValue = (value.slice(0, index) + pasted + value.slice(index + pasted.length)).slice(0, 6);
+    onChange(newValue);
+    const nextIndex = Math.min(index + pasted.length, 5);
+    document.getElementById(`code-input-${nextIndex}`)?.focus();
+  };
+
   const slots = Array.from({ length: 6 }, (_, i) => value[i] || "");
 
   return (
@@ -267,6 +282,7 @@ function RoomCodeInput({
             value={char}
             onChange={(e) => handleChange(e, i)}
             onKeyDown={(e) => handleKeyDown(e, i)}
+            onPaste={(e) => handlePaste(e, i)}
             className="w-12 h-12 text-center text-3xl font-bold text-accent bg-transparent outline-none cursor-text"
           />
         ))}
