@@ -5,19 +5,19 @@ import { api } from "~/api/client";
 
 // Just for MVP for now, in the future, integrate DB
 export async function createRoom(formData: FormData) {
-  const username = (formData.get("username") as string)?.trim();
-  if (!username) return;
+  const displayName = (formData.get("displayName") as string)?.trim();
+  if (!displayName) return;
 
   const hostID = crypto.randomUUID();
 
   const { data, error } = await api.POST("/api/rooms", {
-    body: { hostID, hostUsername: username, hostDisplayName: username },
+    body: { hostID, hostUsername: displayName, hostDisplayName: displayName },
   });
 
   if (error ?? !data) return;
 
   redirect(
-    `/room/${data.roomID}?playerID=${encodeURIComponent(hostID)}&username=${encodeURIComponent(username)}`,
+    `/room/${data.roomID}?playerID=${encodeURIComponent(hostID)}&username=${encodeURIComponent(displayName)}`,
   );
 }
 
