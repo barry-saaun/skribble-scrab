@@ -3,8 +3,11 @@ package room
 import (
 	"encoding/json"
 	"net/http"
+	"regexp"
 	"time"
 )
+
+var usernameRegex = regexp.MustCompile(`^[a-zA-Z0-9][a-zA-Z0-9_-]{1,18}[a-zA-Z0-9]$`)
 
 type RoomHandler struct {
 	manager *RoomManager
@@ -68,6 +71,11 @@ func (h *RoomHandler) HandleJoinRoom(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if !usernameRegex.MatchString(req.PlayerUsername) {
+		http.Error(w, `{"error":"USERNAME_INVALID"}`, http.StatusBadRequest)
+		return
+	}
+
 	room, ok := h.manager.GetRoom(roomID)
 
 	if !ok {
@@ -99,6 +107,11 @@ func (h *RoomHandler) HandleCreateRoom(w http.ResponseWriter, r *http.Request) {
 	var req createRoomRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil || req.HostID == "" || req.HostUsername == "" {
 		http.Error(w, `{"error": "both \"hostID\" and \"hostUsername\" are required"}`, http.StatusBadRequest)
+		return
+	}
+
+	if !usernameRegex.MatchString(req.HostUsername) {
+		http.Error(w, `{"error":"USERNAME_INVALID"}`, http.StatusBadRequest)
 		return
 	}
 

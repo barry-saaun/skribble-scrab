@@ -135,6 +135,26 @@ export const ErrorCode = {
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];
 
+export const errorMessages: Partial<Record<ErrorCode, string>> = {
+  // Game errors
+  [ErrorCode.NOT_HOST]: "You are not host",
+  [ErrorCode.GAME_ALREADY_ACTIVE]: "The game is currently active",
+  [ErrorCode.NOT_ENOUGH_PLAYERS]: "Not enough players to start the game.",
+  [ErrorCode.NOT_YOUR_TURN]: "It's not your turn.",
+  [ErrorCode.ALREADY_GUESSED]: "You have already guessed this round.",
+
+  // Room access errors
+  [ErrorCode.ROOM_NOT_FOUND]: "Room not found. Check the code and try again.",
+  [ErrorCode.INVALID_CODE]: "Invalid room code.",
+  [ErrorCode.ROOM_FULL]: "This room is full.",
+  [ErrorCode.PRIVATE_NO_CODE]: "This room is private.",
+
+  // General room state errors
+  [ErrorCode.PLAYER_ALREADY_IN_ROOM]: "You are already in this room.",
+  [ErrorCode.USERNAME_INVALID]:
+    "Username must be 3–20 characters and can only contain letters, numbers, underscores, or hyphens.",
+};
+
 // ---- Outgoing payloads (client → server) ----
 
 export interface GuessSubmitPayload {
