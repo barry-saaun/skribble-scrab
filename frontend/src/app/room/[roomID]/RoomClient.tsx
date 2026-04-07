@@ -66,14 +66,16 @@ export default function RoomClient({
 
   return (
     <main className="h-screen overflow-hidden bg-neutral-950 text-neutral-100 flex flex-col">
-      {gameState.status === "finished" && gameState.winner && !gameEndDismissed && (
-        <GameEndModal
-          winner={gameState.winner}
-          scores={gameState.scores}
-          players={gameState.players}
-          onClose={() => setGameEndDismissed(true)}
-        />
-      )}
+      {gameState.status === "finished" &&
+        gameState.winner &&
+        !gameEndDismissed && (
+          <GameEndModal
+            winner={gameState.winner}
+            scores={gameState.scores}
+            players={gameState.players}
+            onClose={() => setGameEndDismissed(true)}
+          />
+        )}
       {/* Header */}
       <header className="flex items-center justify-between px-6 py-3 border-b border-neutral-800">
         <div className="flex items-center gap-3">
