@@ -1,7 +1,45 @@
-import { redirect } from "next/navigation";
 import { createRoom } from "../actions";
 import { joinRoomAction } from "../join/actions";
 import { ErrorCode, errorMessages } from "~/types/events";
+
+const PLACEHOLDER_ROOMS = [
+  {
+    name: "CHAOS DRAWING CLUB",
+    status: "IN PROGRESS",
+    players: 5,
+    maxPlayers: 8,
+    round: 6,
+    maxRounds: 10,
+    code: "rm_001",
+  },
+  {
+    name: "SPEED ROUND HELL",
+    status: "WAITING",
+    players: 2,
+    maxPlayers: 6,
+    round: 0,
+    maxRounds: 8,
+    code: "rm_002",
+  },
+  {
+    name: "SILENT ARTISTS ONLY",
+    status: "IN PROGRESS",
+    players: 7,
+    maxPlayers: 8,
+    round: 3,
+    maxRounds: 6,
+    code: "rm_003",
+  },
+  {
+    name: "PICTIONARY VETERANS",
+    status: "WAITING",
+    players: 1,
+    maxPlayers: 10,
+    round: 0,
+    maxRounds: 12,
+    code: "rm_004",
+  },
+] as const;
 
 function BrowseRoomsTab({
   defaultDisplayName,
@@ -12,68 +50,79 @@ function BrowseRoomsTab({
 
   return (
     <div>
-      <p className="text-xs uppercase tracking-widest text-muted-foreground mb-4">
-        {"//"} 4 ACTIVE ROOMS
-      </p>
-      <div className="space-y-3">
-        <div className="border-2 border-foreground p-4 flex items-center justify-between">
-          <div>
-            <h3 className="font-bold uppercase">CHAOS DRAWING CLUB</h3>
-            <p className="text-xs text-muted-foreground mt-1">
-              5/8 PLAYERS • ROUND 6/10 • rm_001
-            </p>
-            <div className="flex gap-1 mt-2">
-              {[...Array(8)].map((_, i) => (
-                <div
-                  key={i}
-                  className={`h-2 w-4 ${i < 5 ? "bg-accent" : "bg-border"}`}
-                />
-              ))}
-            </div>
-          </div>
-          <button
-            disabled={isDisabled}
-            className={`border-2 px-4 py-2 text-xs font-bold uppercase transition-all ${
-              isDisabled
-                ? "border-muted bg-muted text-muted-foreground cursor-not-allowed opacity-50"
-                : "border-accent bg-accent text-accent-foreground hover:opacity-90 cursor-pointer"
-            }`}
-          >
-            SPECTATE
-          </button>
-        </div>
+      <div className="flex items-center justify-between mb-4">
+        <p className="text-xs uppercase tracking-widest text-muted-foreground">
+          {"//"} {PLACEHOLDER_ROOMS.length} ACTIVE ROOMS
+        </p>
+        <button className="border-2 border-foreground px-3 py-1 text-xs font-bold uppercase hover:bg-foreground hover:text-background transition-colors cursor-pointer">
+          REFRESH
+        </button>
+      </div>
 
-        <div className="border-2 border-foreground p-4 flex items-center justify-between">
-          <div>
-            <h3 className="font-bold uppercase">
-              SPEED ROUND HELL{" "}
-              <span className="border-2 border-destructive text-destructive px-2 py-1 text-xs ml-2">
-                WAITING
-              </span>
-            </h3>
-            <p className="text-xs text-muted-foreground mt-1">
-              2/6 PLAYERS • ROUND 0/8 • rm_002
-            </p>
-            <div className="flex gap-1 mt-2">
-              {[...Array(6)].map((_, i) => (
-                <div
-                  key={i}
-                  className={`h-2 w-4 ${i < 2 ? "bg-accent" : "bg-border"}`}
-                />
-              ))}
-            </div>
-          </div>
-          <button
-            disabled={isDisabled}
-            className={`border-2 px-4 py-2 text-xs font-bold uppercase transition-all ${
-              isDisabled
-                ? "border-muted bg-muted text-muted-foreground cursor-not-allowed opacity-50"
-                : "border-accent bg-accent text-accent-foreground hover:opacity-90 cursor-pointer"
-            }`}
+      <div className="space-y-3">
+        {PLACEHOLDER_ROOMS.map((room) => (
+          <div
+            key={room.code}
+            className="border-2 border-foreground p-4 flex items-center justify-between shadow-[4px_4px_0_0_hsl(var(--foreground))]"
           >
-            JOIN
-          </button>
+            <div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <h3 className="font-bold uppercase">{room.name}</h3>
+                <span
+                  className={`border px-2 py-0.5 text-xs font-bold uppercase ${
+                    room.status === "WAITING"
+                      ? "border-destructive text-destructive"
+                      : "border-foreground text-foreground"
+                  }`}
+                >
+                  {room.status}
+                </span>
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">
+                {room.players}/{room.maxPlayers} PLAYERS &nbsp;•&nbsp; ROUND{" "}
+                {room.round}/{room.maxRounds} &nbsp;•&nbsp; {room.code}
+              </p>
+              <div className="flex gap-1 mt-2">
+                {[...Array(room.maxPlayers)].map((_, i) => (
+                  <div
+                    key={i}
+                    className={`h-2 w-4 ${i < room.players ? "bg-accent" : "bg-border"}`}
+                  />
+                ))}
+              </div>
+            </div>
+            <button
+              disabled={isDisabled}
+              className={`border-2 px-4 py-2 text-xs font-bold uppercase transition-all flex-shrink-0 ml-4 ${
+                isDisabled
+                  ? "border-muted bg-muted text-muted-foreground cursor-not-allowed opacity-50"
+                  : "border-accent bg-accent text-accent-foreground hover:opacity-90 cursor-pointer"
+              }`}
+            >
+              {room.status === "WAITING" ? "JOIN" : "SPECTATE"}
+            </button>
+          </div>
+        ))}
+      </div>
+
+      {/* Quick Play */}
+      <div className="border-2 border-foreground p-4 flex items-center justify-between mt-4 shadow-[4px_4px_0_0_hsl(var(--foreground))]">
+        <div>
+          <h3 className="font-bold uppercase">QUICK PLAY</h3>
+          <p className="text-xs text-muted-foreground mt-1 uppercase tracking-widest">
+            DROP INTO THE BEST AVAILABLE ROOM INSTANTLY
+          </p>
         </div>
+        <button
+          disabled={isDisabled}
+          className={`border-2 px-4 py-2 text-xs font-bold uppercase transition-all flex-shrink-0 ml-4 ${
+            isDisabled
+              ? "border-muted bg-muted text-muted-foreground cursor-not-allowed opacity-50"
+              : "border-accent bg-accent text-accent-foreground hover:opacity-90 cursor-pointer"
+          }`}
+        >
+          QUICK PLAY
+        </button>
       </div>
     </div>
   );
@@ -261,7 +310,11 @@ function RoomCodeInput({
       .replace(/[^A-Za-z0-9]/g, "")
       .slice(0, 6 - index);
     if (!pasted) return;
-    const newValue = (value.slice(0, index) + pasted + value.slice(index + pasted.length)).slice(0, 6);
+    const newValue = (
+      value.slice(0, index) +
+      pasted +
+      value.slice(index + pasted.length)
+    ).slice(0, 6);
     onChange(newValue);
     const nextIndex = Math.min(index + pasted.length, 5);
     document.getElementById(`code-input-${nextIndex}`)?.focus();
