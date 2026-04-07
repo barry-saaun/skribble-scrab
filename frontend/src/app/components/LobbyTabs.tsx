@@ -1,5 +1,4 @@
-import { createRoom } from "../actions";
-import { joinRoomAction } from "../join/actions";
+import { createRoom, joinRoomAction } from "../actions";
 import { ErrorCode, errorMessages } from "~/types/events";
 
 const PLACEHOLDER_ROOMS = [
@@ -178,7 +177,7 @@ function CreateRoomTab({ defaultDisplayName }: { defaultDisplayName: string }) {
               : "border-foreground bg-foreground text-background hover:bg-accent hover:border-accent hover:text-accent-foreground cursor-pointer"
           }`}
         >
-          CREATE ROOM
+          CREATE ROOM &amp; JOIN
         </button>
       </form>
     </div>
