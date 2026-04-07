@@ -5,6 +5,8 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
+  --font-sans: "Space Grotesk", "Geist", sans-serif;
+  --font-mono: "Space Mono", "Geist Mono", monospace;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
@@ -49,38 +51,54 @@
 }
 
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.577 0.245 27.325);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --background: oklch(0.955 0.012 85); /* #F5F0E8 warm parchment */
+  --foreground: oklch(0.14 0.008 60); /* #1E1A14 near-black ink */
+  --card: oklch(0.975 0.01 80); /* #FAF6EE cream card surface */
+  --card-foreground: oklch(0.14 0.008 60);
+  --popover: oklch(0.975 0.01 80);
+  --popover-foreground: oklch(0.14 0.008 60);
+
+  --primary: oklch(0.48 0.21 25); /* #C0311A deep red ink */
+  --primary-foreground: oklch(0.975 0.01 80); /* cream text on red */
+
+  --secondary: oklch(0.92 0.018 80); /* #EBE4D4 slightly darker parchment */
+  --secondary-foreground: oklch(0.14 0.008 60);
+
+  --muted: oklch(0.9 0.016 75); /* #E3DACE muted surface */
+  --muted-foreground: oklch(0.44 0.012 60); /* warm dark grey text */
+
+  --accent: oklch(0.48 0.21 25);
+  --accent-foreground: oklch(0.975 0.01 80);
+
+  --destructive: oklch(0.48 0.21 25);
+  --destructive-foreground: oklch(0.975 0.01 80);
+
+  --border: oklch(0.7 0.02 70); /* #B8A898 warm tan border */
+  --input: oklch(0.92 0.018 80);
+  --ring: oklch(0.48 0.21 25);
+
+  --radius: 0rem; /* Brutalist = zero radius */
+
+  /* Sidebar tokens */
+  --sidebar: oklch(0.94 0.015 80);
+  --sidebar-foreground: oklch(0.14 0.008 60);
+  --sidebar-primary: oklch(0.48 0.21 25);
+  --sidebar-primary-foreground: oklch(0.975 0.01 80);
+  --sidebar-accent: oklch(0.92 0.018 80);
+  --sidebar-accent-foreground: oklch(0.14 0.008 60);
+  --sidebar-border: oklch(0.7 0.02 70);
+  --sidebar-ring: oklch(0.48 0.21 25);
+
+  /* Extra brutalist tokens — ink black borders, red accent shadow */
+  --brut-ink: oklch(0.14 0.008 60);
+  --brut-border: 2px solid oklch(0.14 0.008 60);
+  --brut-border-dim: 2px solid oklch(0.7 0.02 70);
+  --brut-shadow: 4px 4px 0px oklch(0.14 0.008 60);
+  --brut-shadow-sm: 2px 2px 0px oklch(0.14 0.008 60);
+  --brut-red: oklch(0.48 0.21 25);
+
+  /* Canvas drawing surface — actual off-white paper */
+  --canvas-bg: #f8f3e8;
 }
 
 .dark {
@@ -126,5 +144,96 @@
   }
   html {
     @apply font-mono;
+  }
+
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: var(--background);
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--brut-ink);
+  }
+}
+
+/* Reusable  utilities */
+@layer utilities {
+  /* Heavy ink-black border — primary structure */
+  .brut-border {
+    border: 2px solid var(--brut-ink);
+  }
+  /* Softer warm-tan border — secondary structure */
+  .brut-border-dim {
+    border: 2px solid oklch(0.7 0.02 70);
+  }
+  /* Ink offset shadow */
+  .brut-shadow {
+    box-shadow: var(--brut-shadow);
+  }
+  .brut-shadow-sm {
+    box-shadow: var(--brut-shadow-sm);
+  }
+  /* Ghost button — ink outline, fills on hover */
+  .brut-btn {
+    @apply font-mono font-bold uppercase tracking-widest text-sm px-5 py-3;
+    border: 2px solid var(--brut-ink);
+    color: var(--brut-ink);
+    background: transparent;
+    transition:
+      background 0.1s,
+      color 0.1s,
+      box-shadow 0.1s;
+  }
+  .brut-btn:hover {
+    background: var(--brut-ink);
+    color: var(--canvas-bg);
+    box-shadow: var(--brut-shadow-sm);
+  }
+  /* Solid red stamp button */
+  .brut-btn-solid {
+    @apply font-mono font-bold uppercase tracking-widest text-sm px-5 py-3;
+    border: 2px solid var(--brut-red);
+    background: var(--brut-red);
+    color: oklch(0.975 0.01 80);
+    transition:
+      box-shadow 0.1s,
+      transform 0.1s;
+  }
+  .brut-btn-solid:hover {
+    box-shadow: 4px 4px 0px var(--brut-ink);
+    transform: translate(-2px, -2px);
+  }
+  /* Input field — parchment fill, ink focus border */
+  .brut-input {
+    @apply font-mono text-sm w-full px-3 py-2 bg-secondary text-foreground;
+    border: 2px solid oklch(0.7 0.02 70);
+    outline: none;
+    transition: border-color 0.1s;
+  }
+  .brut-input:focus {
+    border-color: var(--brut-ink);
+  }
+  /* Inline tag/badge */
+  .brut-tag {
+    @apply font-mono text-xs px-2 py-0.5 uppercase tracking-wider font-bold;
+    border: 1.5px solid var(--brut-ink);
+    color: var(--brut-ink);
+  }
+  /* Small uppercase label */
+  .brut-label {
+    @apply font-mono text-xs uppercase tracking-widest text-muted-foreground;
+  }
+  /* Subtle paper texture scan-line — very faint warm tint */
+  .scan-line {
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 3px,
+      oklch(0.14 0.008 60 / 0.025) 3px,
+      oklch(0.14 0.008 60 / 0.025) 4px
+    );
+    pointer-events: none;
   }
 }
