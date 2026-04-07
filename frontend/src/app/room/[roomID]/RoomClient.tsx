@@ -51,9 +51,10 @@ export default function RoomClient({
 
   useEffect(() => {
     if (gameState.lastError) {
-      toast.error(gameState.lastError.message, {
-        description: gameState.lastError.code,
-      });
+      // // TODO: use the code to render the message instead
+      // toast.error(gameState.lastError.message, {
+      //   description: gameState.lastError.code,
+      // });
     }
   }, [gameState.lastError]);
 

@@ -8,7 +8,7 @@ func (r *Room) handleDrawStroke(event Event) {
 	}
 
 	if event.PlayerID != r.Game.DrawerID {
-		r.sendError(event.PlayerID, ErrNotYourTurn, "only the current drawer can draw")
+		r.sendError(event.PlayerID, ErrNotYourTurn)
 		return
 	}
 
@@ -31,7 +31,7 @@ func (r *Room) handleDrawClear(event Event) {
 	}
 
 	if event.PlayerID != r.Game.DrawerID {
-		r.sendError(event.PlayerID, ErrNotYourTurn, "only the current drawer can clear the canvas")
+		r.sendError(event.PlayerID, ErrNotYourTurn)
 		return
 	}
 

@@ -110,7 +110,6 @@ export interface GameEndPayload {
 
 export interface ErrorPayload {
   code: ErrorCode;
-  message: string;
 }
 
 // Mirrors backend internal/room/events.go error constants

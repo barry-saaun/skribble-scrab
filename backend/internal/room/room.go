@@ -74,7 +74,7 @@ func (r *Room) BroadcastExceptSender(senderID string, msg []byte) {
 	}
 }
 
-func (r *Room) sendError(playerID, code, message string) {
+func (r *Room) sendError(playerID, code string) {
 	r.mu.RLock()
 	client, ok := r.Clients[playerID]
 	r.mu.RUnlock()
@@ -85,7 +85,7 @@ func (r *Room) sendError(playerID, code, message string) {
 
 	b, _ := json.Marshal(outgoingMessage{
 		Type:    string(EventError),
-		Payload: errorPayload{Code: code, Message: message},
+		Payload: errorPayload{Code: code},
 	})
 
 	client.Send(b)

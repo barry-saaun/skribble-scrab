@@ -33,12 +33,12 @@ func getNumOfRotation(numOfPlayers int) (int, error) {
 // handleGameStart starts the game. Only the host can trigger this, and only from StatusWaiting.
 func (r *Room) handleGameStart(event Event) {
 	if event.PlayerID != r.HostID {
-		r.sendError(event.PlayerID, ErrNotHost, "only the host can start the game")
+		r.sendError(event.PlayerID, ErrNotHost)
 		return
 	}
 
 	if r.Status != StatusWaiting {
-		r.sendError(event.PlayerID, ErrGameAlreadyActive, "the game is already in progress")
+		r.sendError(event.PlayerID, ErrGameAlreadyActive)
 		return
 	}
 
@@ -51,7 +51,7 @@ func (r *Room) handleGameStart(event Event) {
 
 	totalRotations, err := getNumOfRotation(len(playerIDs))
 	if err != nil {
-		r.sendError(event.PlayerID, ErrNotEnoughPlayers, "need at least 3 players to start")
+		r.sendError(event.PlayerID, ErrNotEnoughPlayers)
 		return
 	}
 
@@ -223,12 +223,12 @@ func (r *Room) handlePlayerGuess(event Event) {
 	}
 
 	if event.PlayerID == r.Game.DrawerID {
-		r.sendError(event.PlayerID, ErrNotYourTurn, "the drawer cannot guess their own word")
+		r.sendError(event.PlayerID, ErrNotYourTurn)
 		return
 	}
 
 	if r.Game.GuessedPlayers[event.PlayerID] {
-		r.sendError(event.PlayerID, ErrAlreadyGuessed, "you have already guessed correctly this round")
+		r.sendError(event.PlayerID, ErrAlreadyGuessed)
 		return
 	}
 
