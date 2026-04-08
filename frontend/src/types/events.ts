@@ -123,7 +123,6 @@ export const ErrorCode = {
 
   // Room access errors (HTTP)
   ROOM_NOT_FOUND: "ROOM_NOT_FOUND",
-  INVALID_CODE: "INVALID_CODE",
   ROOM_FULL: "ROOM_FULL",
   PRIVATE_NO_CODE: "PRIVATE_NO_CODE",
 
@@ -144,7 +143,6 @@ export const errorMessages: Partial<Record<ErrorCode, string>> = {
 
   // Room access errors
   [ErrorCode.ROOM_NOT_FOUND]: "Room not found. Check the code and try again.",
-  [ErrorCode.INVALID_CODE]: "Invalid room code.",
   [ErrorCode.ROOM_FULL]: "This room is full.",
   [ErrorCode.PRIVATE_NO_CODE]: "This room is private.",
 

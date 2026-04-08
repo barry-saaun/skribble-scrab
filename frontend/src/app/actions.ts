@@ -32,7 +32,7 @@ export async function joinRoomAction(formData: FormData) {
   });
 
   if (roomError) {
-    redirect(`/?error=ROOM_NOT_FOUND&code=${encodeURIComponent(roomCode)}`);
+    redirect(`/error?code=ROOM_NOT_FOUND&room=${encodeURIComponent(roomCode)}`);
   }
 
   const playerID = crypto.randomUUID();
@@ -50,11 +50,8 @@ export async function joinRoomAction(formData: FormData) {
   );
 
   if (joinError && response.status !== 409) {
-    const code =
-      response.status === 403
-        ? "ROOM_FULL"
-        : "ROOM_NOT_FOUND";
-    redirect(`/?error=${code}&code=${encodeURIComponent(roomCode)}`);
+    const code = response.status === 403 ? "ROOM_FULL" : "ROOM_NOT_FOUND";
+    redirect(`/error?code=${code}&room=${encodeURIComponent(roomCode)}`);
   }
 
   redirect(
@@ -74,6 +71,6 @@ export async function joinRoom(
 
   // 409 = already in room (host was auto-added on create) — not an error
   if (error && response.status !== 409) {
-    redirect(`/?error=ROOM_NOT_FOUND&code=${encodeURIComponent(roomID)}`);
+    redirect(`/error?code=ROOM_NOT_FOUND&room=${encodeURIComponent(roomID)}`);
   }
 }
