@@ -17,12 +17,12 @@ const (
 	EventRotationComplete EventType = "rotation.complete"
 
 	// Round lifecycle — one round = one player draws
-	EventRoundStart       EventType = "round.start"
-	EventRoundTick        EventType = "round.tick"
-	EventRoundTimeout     EventType = "round.timeout"
-	EventRoundEnd         EventType = "round.end"         // includes correct word, nextDrawer, rotation status
-	EventRoundEnding      EventType = "round.ending"      // countdown after a correct guess (broadcast to clients)
-	EventRoundEndingDone  EventType = "round.ending.done" // internal: countdown finished, advance drawer
+	EventRoundStart      EventType = "round.start"
+	EventRoundTick       EventType = "round.tick"
+	EventRoundTimeout    EventType = "round.timeout"
+	EventRoundEnd        EventType = "round.end"         // includes correct word, nextDrawer, rotation status
+	EventRoundEnding     EventType = "round.ending"      // countdown after a correct guess (broadcast to clients)
+	EventRoundEndingDone EventType = "round.ending.done" // internal: countdown finished, advance drawer
 
 	// Guessing
 	EventGuessSubmit EventType = "guess.submit"
@@ -51,7 +51,6 @@ const (
 // Error codes for room access / join error
 const (
 	ErrRoomNotValid  = "ROOM_NOT_FOUND"
-	ErrInvalidCode   = "INVALID_CODE"
 	ErrRoomFull      = "ROOM_FULL"
 	ErrPrivateNoCode = "PRIVATE_NO_CODE"
 )

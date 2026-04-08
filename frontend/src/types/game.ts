@@ -1,4 +1,4 @@
-import { ErrorPayload } from "./events";
+import { ErrorPayload } from "./errors";
 
 export type Role = "host" | "player" | "spectator";
 

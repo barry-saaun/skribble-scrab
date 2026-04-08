@@ -11,6 +11,12 @@ import TimerPlaceholder from "~/app/components/Timer";
 import ScoreBoardPlaceholder from "~/app/components/ScoreBoard";
 import GameEndModal from "~/app/components/GameEndModal";
 import RoundEndingOverlay from "~/app/components/RoundEndingOverlay";
+import {
+  toastErrorCodes,
+  toastErrorMessages,
+  toastErrorTitles,
+  type ToastErrorCode,
+} from "~/types/errors";
 
 // TODO: remove later, dev purpose only
 function ConnectionBanner({ isConnected }: { isConnected: boolean }) {
@@ -50,11 +56,17 @@ export default function RoomClient({
   const [gameEndDismissed, setGameEndDismissed] = useState(false);
 
   useEffect(() => {
-    if (gameState.lastError) {
-      // // TODO: use the code to render the message instead
-      // toast.error(gameState.lastError.message, {
-      //   description: gameState.lastError.code,
-      // });
+    if (
+      gameState.lastError &&
+      (toastErrorCodes as readonly string[]).includes(gameState.lastError.code)
+    ) {
+      const errorCode = gameState.lastError.code as ToastErrorCode;
+      const errorTitle = toastErrorTitles[errorCode];
+      const errorDescription = toastErrorMessages[errorCode];
+
+      toast.error(errorTitle, {
+        description: errorDescription,
+      });
     }
   }, [gameState.lastError]);
 

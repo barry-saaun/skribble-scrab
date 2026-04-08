@@ -1,13 +1,18 @@
 import Link from "next/link";
-import { ErrorCode, errorMessages } from "~/types/events";
+import {
+  fullPageErrorCodes,
+  fullPageErrorMessages,
+  fullPageErrorTitles,
+  type FullPageErrorCodes,
+} from "~/types/errors";
 
-const KNOWN_CODES = new Set<string>(Object.values(ErrorCode));
+const KNOWN_FULL_PAGE_CODES = new Set<string>(fullPageErrorCodes);
 
 function resolveError(code: string | undefined): {
   title: string;
   message: string;
 } {
-  if (!code || !KNOWN_CODES.has(code)) {
+  if (!code || !KNOWN_FULL_PAGE_CODES.has(code)) {
     return {
       title: "SOMETHING WENT WRONG",
       message:
@@ -15,19 +20,10 @@ function resolveError(code: string | undefined): {
     };
   }
 
-  const errorCode = code as ErrorCode;
-  const message = errorMessages[errorCode] ?? "An unexpected error occurred.";
-
-  const titles: Partial<Record<ErrorCode, string>> = {
-    [ErrorCode.ROOM_NOT_FOUND]: "ROOM NOT FOUND",
-    [ErrorCode.ROOM_FULL]: "ROOM IS FULL",
-    [ErrorCode.PRIVATE_NO_CODE]: "ACCESS DENIED",
-    [ErrorCode.PLAYER_ALREADY_IN_ROOM]: "ALREADY IN ROOM",
-  };
-
+  const errorCode = code as FullPageErrorCodes;
   return {
-    title: titles[errorCode] ?? "ERROR",
-    message,
+    title: fullPageErrorTitles[errorCode],
+    message: fullPageErrorMessages[errorCode],
   };
 }
 
