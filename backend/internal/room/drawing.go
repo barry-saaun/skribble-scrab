@@ -8,7 +8,7 @@ func (r *Room) handleDrawStroke(event Event) {
 	}
 
 	if event.PlayerID != r.Game.DrawerID {
-		r.sendError(event.PlayerID, ErrNotYourTurn)
+		r.sendError(event.PlayerID, ErrNotYourTurnToDraw)
 		return
 	}
 
@@ -31,7 +31,7 @@ func (r *Room) handleDrawClear(event Event) {
 	}
 
 	if event.PlayerID != r.Game.DrawerID {
-		r.sendError(event.PlayerID, ErrNotYourTurn)
+		r.sendError(event.PlayerID, ErrNotYourTurnToDraw)
 		return
 	}
 

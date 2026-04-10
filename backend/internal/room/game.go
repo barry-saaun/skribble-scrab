@@ -3,12 +3,15 @@ package room
 import (
 	"context"
 	"encoding/json"
-	"fmt"
+	"log"
 	"maps"
 	"math/rand"
 	"strings"
 	"time"
 )
+
+// TODO: change back to three later. 2 for testing without having to open 3 ws connections
+const minPlayers = 2
 
 // TODO: pick a random from the db later
 // Right now: aim for MVP
@@ -17,16 +20,18 @@ var wordList = []string{
 	"mountain", "ocean", "rocket", "castle", "dragon", "robot", "flower",
 }
 
-func getNumOfRotation(numOfPlayers int) (int, error) {
+func hasEnoughPlayers(numOfPlayers int) bool {
+	return numOfPlayers >= minPlayers
+}
+
+func getNumOfRotation(numOfPlayers int) int {
 	switch {
-	case numOfPlayers >= 3 && numOfPlayers <= 5:
-		return 3, nil
-	case numOfPlayers >= 6 && numOfPlayers <= 10:
-		return 2, nil
-	case numOfPlayers > 10:
-		return 1, nil
+	case numOfPlayers <= 5:
+		return 3
+	case numOfPlayers <= 10:
+		return 2
 	default:
-		return 0, fmt.Errorf("invalid player count: %d (minimum 3)", numOfPlayers)
+		return 1
 	}
 }
 
@@ -49,11 +54,12 @@ func (r *Room) handleGameStart(event Event) {
 	}
 	r.mu.RUnlock()
 
-	totalRotations, err := getNumOfRotation(len(playerIDs))
-	if err != nil {
+	if !hasEnoughPlayers(len(playerIDs)) {
 		r.sendError(event.PlayerID, ErrNotEnoughPlayers)
 		return
 	}
+
+	totalRotations := getNumOfRotation(len(playerIDs))
 
 	rand.Shuffle(len(playerIDs), func(i, j int) { playerIDs[i], playerIDs[j] = playerIDs[j], playerIDs[i] })
 
@@ -68,6 +74,8 @@ func (r *Room) handleGameStart(event Event) {
 		CurrentWord:     wordList[rand.Intn(len(wordList))],
 		Scores:          make(map[string]int),
 		GuessedPlayers:  make(map[string]bool),
+		LastGuessAt:     make(map[string]time.Time),
+		GuessCount:      make(map[string]int),
 	}
 
 	r.BroadcastEvent(EventRotationStart, rotationStartPayload{
@@ -174,6 +182,8 @@ func (r *Room) advanceDrawer(word string, scores map[string]int) {
 	r.Game.DrawerID = r.Game.DrawOrder[r.Game.DrawerIndex]
 	r.Game.CurrentWord = wordList[rand.Intn(len(wordList))]
 	r.Game.GuessedPlayers = make(map[string]bool)
+	r.Game.LastGuessAt = make(map[string]time.Time)
+	r.Game.GuessCount = make(map[string]int)
 	r.Game.CurrentRound++
 
 	if rotationComplete {
@@ -222,15 +232,14 @@ func (r *Room) handlePlayerGuess(event Event) {
 		return
 	}
 
-	if event.PlayerID == r.Game.DrawerID {
-		r.sendError(event.PlayerID, ErrNotYourTurn)
+	if time.Since(r.Game.LastGuessAt[event.PlayerID]) < 1*time.Second {
+		r.sendError(event.PlayerID, ErrGuessCooldown)
 		return
 	}
 
-	if r.Game.GuessedPlayers[event.PlayerID] {
-		r.sendError(event.PlayerID, ErrAlreadyGuessed)
-		return
-	}
+	r.Game.LastGuessAt[event.PlayerID] = time.Now()
+	r.Game.GuessCount[event.PlayerID]++
+	log.Printf("[guess] player=%s attempt=%d", event.PlayerID, r.Game.GuessCount[event.PlayerID])
 
 	raw, ok := event.Payload.(json.RawMessage)
 	if !ok {

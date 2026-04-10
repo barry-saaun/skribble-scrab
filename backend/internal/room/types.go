@@ -50,6 +50,8 @@ type GameState struct {
 	CurrentWord    string
 	Scores         map[string]int
 	GuessedPlayers map[string]bool
+	LastGuessAt    map[string]time.Time // tracks last guess timestamp per player for cooldown
+	GuessCount     map[string]int       // counts allowed guesses per player per round
 
 	CurrentRotation int
 	TotalRotations  int

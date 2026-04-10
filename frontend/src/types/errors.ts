@@ -4,8 +4,8 @@ export const ErrorCode = {
   NOT_HOST: "NOT_HOST",
   GAME_ALREADY_ACTIVE: "GAME_ALREADY_ACTIVE",
   NOT_ENOUGH_PLAYERS: "NOT_ENOUGH_PLAYERS",
-  NOT_YOUR_TURN: "NOT_YOUR_TURN",
-  ALREADY_GUESSED: "ALREADY_GUESSED",
+  NOT_YOUR_TURN_TO_DRAW: "NOT_YOUR_TURN",
+  GUESS_COOLDOWN: "GUESS_COOLDOWN",
 
   // Room access errors (HTTP)
   ROOM_NOT_FOUND: "ROOM_NOT_FOUND",
@@ -19,8 +19,8 @@ export const ErrorCode = {
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];
 
-export interface ErrorPayload {
-  code: ErrorCode;
+export interface ErrorPayload<TCode extends ErrorCode = ErrorCode> {
+  code: TCode;
 }
 
 export const errorMessages: Partial<Record<ErrorCode, string>> = {
@@ -28,8 +28,8 @@ export const errorMessages: Partial<Record<ErrorCode, string>> = {
   [ErrorCode.NOT_HOST]: "You are not host",
   [ErrorCode.GAME_ALREADY_ACTIVE]: "The game is currently active",
   [ErrorCode.NOT_ENOUGH_PLAYERS]: "Need at least 3 players to start the game.",
-  [ErrorCode.NOT_YOUR_TURN]: "It's not your turn.",
-  [ErrorCode.ALREADY_GUESSED]: "You have already guessed this round.",
+  [ErrorCode.NOT_YOUR_TURN_TO_DRAW]: "Only the drawer can draw.",
+  [ErrorCode.GUESS_COOLDOWN]: "Please wait a moment before guessing again.",
 
   // Room access errors
   [ErrorCode.ROOM_NOT_FOUND]: "Room not found. Check the code and try again.",
@@ -51,6 +51,7 @@ export const toastErrorCodes = [
 ] as const;
 
 export type ToastErrorCode = (typeof toastErrorCodes)[number];
+export type ToastErrorPaylaod = ErrorPayload<ToastErrorCode>;
 
 export const toastErrorMessages = Object.fromEntries(
   toastErrorCodes.map((code) => [code, errorMessages[code]]),
@@ -63,11 +64,16 @@ export const toastErrorTitles: Record<ToastErrorCode, string> = {
   [ErrorCode.NOT_HOST]: "NOT HOST",
 };
 
+export function isToastErrorCode(code: ErrorCode): code is ToastErrorCode {
+  return (toastErrorCodes as readonly ErrorCode[]).includes(code);
+}
+
 /// ==== FULL PAGE ====
 
-export const fullPageErrorCodes = [ErrorCode.ROOM_NOT_FOUND];
+export const fullPageErrorCodes = [ErrorCode.ROOM_NOT_FOUND] as const;
 
 export type FullPageErrorCodes = (typeof fullPageErrorCodes)[number];
+export type FullPageErrorPayload = ErrorPayload<FullPageErrorCodes>;
 
 export const fullPageErrorMessages = Object.fromEntries(
   fullPageErrorCodes.map((code) => [code, errorMessages[code]]),
@@ -76,3 +82,17 @@ export const fullPageErrorMessages = Object.fromEntries(
 export const fullPageErrorTitles: Record<FullPageErrorCodes, string> = {
   [ErrorCode.ROOM_NOT_FOUND]: "ROOM NOT FOUND",
 };
+
+//// === IN-LINE ====
+export const inlineErrorCodes = [ErrorCode.GUESS_COOLDOWN] as const;
+
+export type InlineErrorCodes = (typeof inlineErrorCodes)[number];
+export type InlineErrorPayload = ErrorPayload<InlineErrorCodes>;
+
+export const inlineErrorMessages = Object.fromEntries(
+  inlineErrorCodes.map((code) => [code, errorMessages[code]]),
+) as Record<InlineErrorCodes, string>;
+
+export function isInlineErrorCode(code: ErrorCode): code is InlineErrorCodes {
+  return (inlineErrorCodes as readonly ErrorCode[]).includes(code);
+}

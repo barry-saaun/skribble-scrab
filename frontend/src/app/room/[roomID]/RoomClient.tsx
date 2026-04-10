@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import useGameSocket from "~/hooks/useGameSocket";
 import PlayersListPlaceholder from "~/app/components/PlayersList";
@@ -15,7 +15,11 @@ import {
   toastErrorCodes,
   toastErrorMessages,
   toastErrorTitles,
+  inlineErrorCodes,
   type ToastErrorCode,
+  type InlineErrorCodes,
+  isInlineErrorCode,
+  isToastErrorCode,
 } from "~/types/errors";
 
 // TODO: remove later, dev purpose only
@@ -55,20 +59,25 @@ export default function RoomClient({
 
   const [gameEndDismissed, setGameEndDismissed] = useState(false);
 
-  useEffect(() => {
-    if (
-      gameState.lastError &&
-      (toastErrorCodes as readonly string[]).includes(gameState.lastError.code)
-    ) {
-      const errorCode = gameState.lastError.code as ToastErrorCode;
-      const errorTitle = toastErrorTitles[errorCode];
-      const errorDescription = toastErrorMessages[errorCode];
+  const lastError = gameState.lastError;
 
-      toast.error(errorTitle, {
-        description: errorDescription,
-      });
+  const inlineError = useMemo(() => {
+    if (!lastError || !isInlineErrorCode(lastError.code)) {
+      return undefined;
     }
-  }, [gameState.lastError]);
+
+    return {
+      code: lastError.code,
+    };
+  }, [lastError]);
+
+  useEffect(() => {
+    if (!lastError || !isToastErrorCode(lastError.code)) return;
+
+    toast.error(toastErrorTitles[lastError.code], {
+      description: toastErrorMessages[lastError.code],
+    });
+  }, [lastError]);
 
   const isHost =
     playerID === gameState.players.find((p) => p.role === "host")?.id;
@@ -176,9 +185,10 @@ export default function RoomClient({
         <aside className="w-64 flex flex-col gap-3 shrink-0 min-h-0">
           <GuessBox
             guesses={guessLog}
-            players={gameState.players}
             isDrawer={isDrawer}
             onGuess={sendGuess}
+            gameState={gameState}
+            inlineError={inlineError}
           />
           <ChatBox
             messages={chatLog}

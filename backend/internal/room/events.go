@@ -44,8 +44,8 @@ const (
 	ErrNotHost           = "NOT_HOST"
 	ErrGameAlreadyActive = "GAME_ALREADY_ACTIVE"
 	ErrNotEnoughPlayers  = "NOT_ENOUGH_PLAYERS"
-	ErrNotYourTurn       = "NOT_YOUR_TURN"
-	ErrAlreadyGuessed    = "ALREADY_GUESSED"
+	ErrNotYourTurnToDraw = "NOT_YOUR_TURN"
+	ErrGuessCooldown     = "GUESS_COOLDOWN"
 )
 
 // Error codes for room access / join error
