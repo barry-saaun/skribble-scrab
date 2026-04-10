@@ -50,6 +50,13 @@ func (r *Room) Broadcast(msg []byte) {
 	}
 }
 
+func (r *Room) IsFull() bool {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	return len(r.Players) >= r.MaxPlayers
+}
+
 func (r *Room) BroadcastEvent(eventType EventType, payload any) {
 	b, err := json.Marshal(outgoingMessage{Type: string(eventType), Payload: payload})
 	if err != nil {

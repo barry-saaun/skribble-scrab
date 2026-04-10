@@ -37,6 +37,7 @@ type Room struct {
 	HostDisplayName string
 	Game            GameState
 	Players         map[string]*Player
+	MaxPlayers      int
 	Clients         map[string]Sender
 	Events          chan Event
 	Status          Status
@@ -58,6 +59,6 @@ type GameState struct {
 	DrawOrder       []string
 	DrawerIndex     int
 
-	Timer        context.CancelFunc
-	RoundEnding  bool // true while the post-guess countdown is running
+	Timer       context.CancelFunc
+	RoundEnding bool // true while the post-guess countdown is running
 }

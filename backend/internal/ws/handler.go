@@ -30,20 +30,20 @@ func (h *Handler) HandleWS(w http.ResponseWriter, r *http.Request) {
 	playerID := r.URL.Query().Get("playerID")
 
 	if roomID == "" || playerID == "" {
-		http.Error(w, "missing roomID or playerID", http.StatusBadRequest)
+		writeErrorCode(w, http.StatusBadRequest, "INVALID_REQUEST")
 		return
 	}
 
 	room, ok := h.manager.GetRoom(roomID)
 	if !ok {
-		http.Error(w, "room not found", http.StatusNotFound)
+		writeErrorCode(w, http.StatusNotFound, "ROOM_NOT_FOUND")
 		return
 	}
 
 	player, ok := room.GetPlayer(playerID)
 
 	if !ok {
-		http.Error(w, "player not in room", http.StatusForbidden)
+		writeErrorCode(w, http.StatusForbidden, "PLAYER_NOT_IN_ROOM")
 		return
 	}
 

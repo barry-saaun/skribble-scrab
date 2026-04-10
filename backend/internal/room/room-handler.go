@@ -67,34 +67,38 @@ func (h *RoomHandler) HandleJoinRoom(w http.ResponseWriter, r *http.Request) {
 
 	var req joinRoomRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil || req.PlayerID == "" {
-		http.Error(w, `{"error":"playerID is required"}`, http.StatusBadRequest)
+		writeErrorCode(w, http.StatusBadRequest, "INVALID_REQUEST")
 		return
 	}
 
 	if !usernameRegex.MatchString(req.PlayerUsername) {
-		http.Error(w, `{"error":"USERNAME_INVALID"}`, http.StatusBadRequest)
+		writeErrorCode(w, http.StatusBadRequest, "USERNAME_INVALID")
 		return
 	}
 
 	room, ok := h.manager.GetRoom(roomID)
 
 	if !ok {
-		http.Error(w, `{"error":"room not found"}`, http.StatusNotFound)
+		writeErrorCode(w, http.StatusNotFound, "ROOM_NOT_FOUND")
+		return
+	}
+
+	isFull := room.IsFull()
+
+	if isFull {
+		writeErrorCode(w, http.StatusConflict, "ROOM_FULL")
 		return
 	}
 
 	if _, ok := room.GetPlayer(req.PlayerID); ok {
-		http.Error(w, `{"error": "player already in room"}`, http.StatusConflict)
+		writeErrorCode(w, http.StatusConflict, "PLAYER_ALREADY_IN_ROOM")
 		return
 	}
 
 	player := &Player{ID: req.PlayerID, Username: req.PlayerUsername, DisplayName: req.PlayerDisplayName, Role: RolePlayer, JoinedAt: time.Now()}
 	room.AddPlayer(player)
 
-	w.Header().Set("Content-Type", "application/json")
-
-	w.WriteHeader(http.StatusCreated)
-	_ = json.NewEncoder(w).Encode(joinRoomResponse{
+	writeJSON(w, http.StatusCreated, joinRoomResponse{
 		PlayerID:          player.ID,
 		PlayerUsername:    player.Username,
 		PlayerDisplayName: player.DisplayName,
@@ -106,20 +110,18 @@ func (h *RoomHandler) HandleJoinRoom(w http.ResponseWriter, r *http.Request) {
 func (h *RoomHandler) HandleCreateRoom(w http.ResponseWriter, r *http.Request) {
 	var req createRoomRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil || req.HostID == "" || req.HostUsername == "" {
-		http.Error(w, `{"error": "both \"hostID\" and \"hostUsername\" are required"}`, http.StatusBadRequest)
+		writeErrorCode(w, http.StatusBadRequest, "INVALID_REQUEST")
 		return
 	}
 
 	if !usernameRegex.MatchString(req.HostUsername) {
-		http.Error(w, `{"error":"USERNAME_INVALID"}`, http.StatusBadRequest)
+		writeErrorCode(w, http.StatusBadRequest, "USERNAME_INVALID")
 		return
 	}
 
 	room := h.manager.CreateRoom(req.HostID, req.HostUsername, req.HostDisplayName)
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
-	_ = json.NewEncoder(w).Encode(createRoomResponse{
+	writeJSON(w, http.StatusCreated, createRoomResponse{
 		RoomID:          room.ID,
 		HostID:          room.HostID,
 		HostUsername:    room.HostUsername,
@@ -133,7 +135,7 @@ func (h *RoomHandler) HandleGetRoom(w http.ResponseWriter, r *http.Request) {
 	roomID := r.PathValue("roomID")
 	room, ok := h.manager.GetRoom(roomID)
 	if !ok {
-		http.Error(w, `{"error":"room not found"}`, http.StatusNotFound)
+		writeErrorCode(w, http.StatusNotFound, "ROOM_NOT_FOUND")
 		return
 	}
 
@@ -145,8 +147,7 @@ func (h *RoomHandler) HandleGetRoom(w http.ResponseWriter, r *http.Request) {
 	}
 	room.mu.RUnlock()
 
-	w.Header().Set("Content-Type", "application/json")
-	_ = json.NewEncoder(w).Encode(getRoomResponse{
+	writeJSON(w, http.StatusOK, getRoomResponse{
 		RoomID:    room.ID,
 		HostID:    room.HostID,
 		Status:    room.Status,

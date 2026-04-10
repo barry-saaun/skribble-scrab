@@ -7,7 +7,13 @@ import (
 	"time"
 )
 
+// INFO:  This file is essentialy only used for in-memory implementation.
+// NO NEED when DB is implemented
+
 const idAlphabet = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+
+// TODO: allow user to customise this
+const MaxPlayers = 2
 
 type RoomManager struct {
 	rooms map[string]*Room
@@ -33,6 +39,7 @@ func (m *RoomManager) CreateRoom(hostID, hostUsername, HostDisplayName string) *
 
 	r := &Room{
 		ID:              roomID,
+		MaxPlayers:      MaxPlayers,
 		HostID:          hostID,
 		HostUsername:    hostUsername,
 		HostDisplayName: HostDisplayName,
