@@ -58,8 +58,13 @@ func (c *Client) ReadPump(r *room.Room) {
 			continue
 		}
 
+		if !validClientEvents[incoming.Type] {
+			log.Printf("client %s sent disallowed event type: %q", c.playerID, incoming.Type)
+			continue
+		}
+
 		r.Events <- room.Event{
-			Type:     room.EventType(incoming.Type),
+			Type:     incoming.Type,
 			PlayerID: c.playerID,
 			Payload:  incoming.Payload,
 		}
