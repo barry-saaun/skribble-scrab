@@ -116,6 +116,10 @@ export default function useGameSocket({
   const [chatLog, setChatLog] = useState<ChatEntry[]>([]);
   const [guessLog, setGuessLog] = useState<GuessEntry[]>([]);
 
+  // Canvas drawing callbacks — registered by parent component
+  const applyStrokeCallback = useRef<((payload: DrawStrokePayload) => void) | null>(null);
+  const applyClearCallback = useRef<(() => void) | null>(null);
+
   useEffect(() => {
     const ws = new WebSocket(
       `${env.NEXT_PUBLIC_WS_BASE_URL}/ws?roomID=${encodeURIComponent(roomID)}&playerID=${encodeURIComponent(playerID)}`,
@@ -136,6 +140,8 @@ export default function useGameSocket({
           // Clear logs at the start of each round
           setChatLog([]);
           setGuessLog([]);
+          // Auto-clear canvas for everyone at round start
+          applyClearCallback.current?.();
         }
 
         if (msg.type === "round.end") {
@@ -160,6 +166,15 @@ export default function useGameSocket({
           ]);
         }
 
+        // Handle incoming draw strokes and clears
+        if (msg.type === "draw.stroke") {
+          applyStrokeCallback.current?.(msg.payload);
+        }
+
+        if (msg.type === "draw.clear") {
+          applyClearCallback.current?.();
+        }
+
         dispatch(msg);
       } catch {
         // ignore malformed messages
@@ -168,6 +183,16 @@ export default function useGameSocket({
 
     return () => ws.close();
   }, [roomID, playerID]);
+
+  // ---- Draw callback registration ----
+
+  const registerDrawCallbacks = (
+    onStroke: (payload: DrawStrokePayload) => void,
+    onClear: () => void,
+  ) => {
+    applyStrokeCallback.current = onStroke;
+    applyClearCallback.current = onClear;
+  };
 
   // ---- Send helper ----
 
@@ -197,5 +222,6 @@ export default function useGameSocket({
     sendChat,
     sendStroke,
     sendClear,
+    registerDrawCallbacks,
   };
 }

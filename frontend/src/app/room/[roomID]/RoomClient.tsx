@@ -1,18 +1,14 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import useGameSocket from "~/hooks/useGameSocket";
-import PlayersListPlaceholder from "~/app/components/PlayersList";
-import CanvasPlaceholder from "~/app/components/Canvas";
-import ChatBox from "~/app/components/ChatBox";
-import GuessBox from "~/app/components/GuessBox";
+import Canvas from "~/app/components/Canvas";
 import TimerPlaceholder from "~/app/components/Timer";
-import ScoreBoardPlaceholder from "~/app/components/ScoreBoard";
 import GameEndModal from "~/app/components/GameEndModal";
 import RoundEndingOverlay from "~/app/components/RoundEndingOverlay";
+import type { CanvasHandle, DrawStrokePayload } from "~/types/events";
 import {
-  toastErrorCodes,
   toastErrorMessages,
   toastErrorTitles,
   inlineErrorCodes,
@@ -55,9 +51,13 @@ export default function RoomClient({
     sendGameStart,
     sendChat,
     sendGuess,
+    sendStroke,
+    sendClear,
+    registerDrawCallbacks,
   } = useGameSocket({ roomID, playerID });
 
   const [gameEndDismissed, setGameEndDismissed] = useState(false);
+  const canvasRef = useRef<CanvasHandle>(null);
 
   const lastError = gameState.lastError;
 
@@ -79,6 +79,27 @@ export default function RoomClient({
     });
   }, [lastError]);
 
+  // Register draw callbacks with the WebSocket hook
+  useEffect(() => {
+    registerDrawCallbacks(
+      (payload) => canvasRef.current?.applyStroke(payload),
+      () => canvasRef.current?.clearCanvas(),
+    );
+  }, [registerDrawCallbacks]);
+
+  // Stable event handlers for drawing
+  const handleStroke = useCallback(
+    (payload: DrawStrokePayload) => {
+      sendStroke(payload);
+    },
+    [sendStroke],
+  );
+
+  const handleClear = useCallback(() => {
+    canvasRef.current?.clearCanvas();
+    sendClear();
+  }, [sendClear]);
+
   const isHost =
     playerID === gameState.players.find((p) => p.role === "host")?.id;
 
@@ -87,7 +108,7 @@ export default function RoomClient({
   const isDrawer = playerID === gameState.drawerID;
 
   return (
-    <main className="h-screen overflow-hidden bg-neutral-950 text-neutral-100 flex flex-col">
+    <main className="h-screen overflow-hidden bg-background text-foreground flex flex-col">
       {gameState.status === "finished" &&
         gameState.winner &&
         !gameEndDismissed && (
@@ -164,11 +185,13 @@ export default function RoomClient({
           )}
         </aside>
 
-        {/* Center — canvas */}
-        <div className="relative flex flex-col flex-1 gap-4 min-w-0">
-          <CanvasPlaceholder
-            drawerID={gameState.drawerID}
-            myPlayerID={playerID}
+        {/* Center — Canvas */}
+        <div className="flex-1 flex flex-col min-w-0">
+          <Canvas
+            ref={canvasRef}
+            isDrawer={isDrawer}
+            onStroke={handleStroke}
+            onClear={handleClear}
           />
           {gameState.roundEndingCountdown !== null &&
             gameState.roundEndingGuesserID !== null &&

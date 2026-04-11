@@ -111,6 +111,13 @@ export interface GameEndPayload {
   winner: string;
 }
 
+// ---- Canvas imperative handle ----
+
+export interface CanvasHandle {
+  applyStroke: (payload: DrawStrokePayload) => void;
+  clearCanvas: () => void;
+}
+
 export { errorMessages, toastErrorCodes, toastErrorMessages } from "./errors";
 export type { ErrorCode, ToastErrorCode } from "./errors";
 
