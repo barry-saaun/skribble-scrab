@@ -83,15 +83,15 @@ func (h *RoomHandler) HandleJoinRoom(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if _, ok := room.GetPlayer(req.PlayerID); ok {
+		writeErrorCode(w, http.StatusConflict, "PLAYER_ALREADY_IN_ROOM")
+		return
+	}
+
 	isFull := room.IsFull()
 
 	if isFull {
 		writeErrorCode(w, http.StatusConflict, "ROOM_FULL")
-		return
-	}
-
-	if _, ok := room.GetPlayer(req.PlayerID); ok {
-		writeErrorCode(w, http.StatusConflict, "PLAYER_ALREADY_IN_ROOM")
 		return
 	}
 

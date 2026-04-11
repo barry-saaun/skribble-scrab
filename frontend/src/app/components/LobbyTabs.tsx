@@ -1,5 +1,13 @@
-import React from "react";
+"use client";
+
+import React, { useActionState, useEffect } from "react";
+import { toast } from "sonner";
 import { createRoom, joinRoomAction } from "../actions";
+import {
+  ErrorCode,
+  toastErrorTitles,
+  toastErrorMessages,
+} from "~/types/errors";
 
 const PLACEHOLDER_ROOMS = [
   {
@@ -194,13 +202,22 @@ function JoinByCodeTab({
   codeInput: string[];
   setCodeInput: (value: string[]) => void;
 }) {
+  const [state, formAction] = useActionState(joinRoomAction, null);
   const roomCode = codeInput.join("");
   const isDisabled =
     !defaultDisplayName.trim() || codeInput.some((char) => !char);
 
+  useEffect(() => {
+    if (state?.error === ErrorCode.ROOM_FULL) {
+      toast.error(toastErrorTitles[ErrorCode.ROOM_FULL], {
+        description: toastErrorMessages[ErrorCode.ROOM_FULL],
+      });
+    }
+  }, [state]);
+
   return (
     <div className="flex justify-center">
-      <form action={joinRoomAction} className="w-full max-w-md space-y-6">
+      <form action={formAction} className="w-full max-w-md space-y-6">
         <div>
           <label className="mb-4 block text-xs uppercase tracking-widest text-muted-foreground">
             {"//"} ENTER ROOM ACCESS CODE

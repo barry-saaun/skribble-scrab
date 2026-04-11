@@ -77,7 +77,7 @@ export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
         ErrorResponse: {
-            error: string;
+            code: string;
         };
         /** @enum {string} */
         Role: "host" | "player" | "spectator";
@@ -243,7 +243,7 @@ export interface operations {
                     "application/json": components["schemas"]["JoinRoomResponse"];
                 };
             };
-            /** @description Bad request */
+            /** @description Bad request (e.g. invalid username) */
             400: {
                 headers: {
                     [name: string]: unknown;
@@ -261,7 +261,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
-            /** @description Player already in room */
+            /** @description Room is full or player already in room */
             409: {
                 headers: {
                     [name: string]: unknown;

@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { api } from "~/api/client";
+import { ErrorCode } from "~/types/errors";
 
 // Just for MVP for now, in the future, integrate DB
 export async function createRoom(formData: FormData) {
@@ -21,37 +22,32 @@ export async function createRoom(formData: FormData) {
   );
 }
 
-export async function joinRoomAction(formData: FormData) {
+export async function joinRoomAction(
+  _prevState: { error: string } | null,
+  formData: FormData,
+) {
   const roomCode = (formData.get("roomCode") as string)?.trim();
   const displayName = (formData.get("displayName") as string)?.trim();
 
-  if (!roomCode || !displayName) return;
-
-  const { error: roomError } = await api.GET("/api/rooms/{roomID}", {
-    params: { path: { roomID: roomCode } },
-  });
-
-  if (roomError) {
-    redirect(`/error?code=ROOM_NOT_FOUND&room=${encodeURIComponent(roomCode)}`);
-  }
+  if (!roomCode || !displayName) return null;
 
   const playerID = crypto.randomUUID();
 
-  const { error: joinError, response } = await api.POST(
-    "/api/rooms/{roomID}/join",
-    {
-      params: { path: { roomID: roomCode } },
-      body: {
-        playerID,
-        playerUsername: displayName,
-        playerDisplayName: displayName,
-      },
+  const { error: joinError } = await api.POST("/api/rooms/{roomID}/join", {
+    params: { path: { roomID: roomCode } },
+    body: {
+      playerID,
+      playerUsername: displayName,
+      playerDisplayName: displayName,
     },
-  );
+  });
 
-  if (joinError && response.status !== 409) {
-    const code = response.status === 403 ? "ROOM_FULL" : "ROOM_NOT_FOUND";
-    redirect(`/error?code=${code}&room=${encodeURIComponent(roomCode)}`);
+  if (joinError?.code === ErrorCode.ROOM_FULL) {
+    return { error: ErrorCode.ROOM_FULL };
+  }
+
+  if (joinError && joinError.code !== ErrorCode.PLAYER_ALREADY_IN_ROOM) {
+    redirect(`/error?code=ROOM_NOT_FOUND&room=${encodeURIComponent(roomCode)}`);
   }
 
   redirect(
@@ -64,13 +60,13 @@ export async function joinRoom(
   playerID: string,
   username: string,
 ) {
-  const { error, response } = await api.POST("/api/rooms/{roomID}/join", {
+  const { error } = await api.POST("/api/rooms/{roomID}/join", {
     params: { path: { roomID } },
     body: { playerID, playerUsername: username },
   });
 
-  // 409 = already in room (host was auto-added on create) — not an error
-  if (error && response.status !== 409) {
+  // Already in room (host was auto-added on create) — not an error
+  if (error && error.code !== ErrorCode.PLAYER_ALREADY_IN_ROOM) {
     redirect(`/error?code=ROOM_NOT_FOUND&room=${encodeURIComponent(roomID)}`);
   }
 }

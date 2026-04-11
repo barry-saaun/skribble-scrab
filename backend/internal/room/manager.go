@@ -13,7 +13,7 @@ import (
 const idAlphabet = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 
 // TODO: allow user to customise this
-const MaxPlayers = 2
+const MaxPlayers = 6
 
 type RoomManager struct {
 	rooms map[string]*Room

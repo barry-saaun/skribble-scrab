@@ -33,7 +33,7 @@ export const errorMessages: Partial<Record<ErrorCode, string>> = {
 
   // Room access errors
   [ErrorCode.ROOM_NOT_FOUND]: "Room not found. Check the code and try again.",
-  [ErrorCode.ROOM_FULL]: "This room is full.",
+  [ErrorCode.ROOM_FULL]: "The maximum players of this room has been reached.",
   [ErrorCode.PRIVATE_NO_CODE]: "This room is private.",
 
   // General room state errors
@@ -48,6 +48,7 @@ export const toastErrorCodes = [
   ErrorCode.GAME_ALREADY_ACTIVE,
   ErrorCode.PLAYER_ALREADY_IN_ROOM,
   ErrorCode.NOT_HOST,
+  ErrorCode.ROOM_FULL,
 ] as const;
 
 export type ToastErrorCode = (typeof toastErrorCodes)[number];
@@ -62,6 +63,7 @@ export const toastErrorTitles: Record<ToastErrorCode, string> = {
   [ErrorCode.GAME_ALREADY_ACTIVE]: "GAME ALREADY ACTIVE",
   [ErrorCode.PLAYER_ALREADY_IN_ROOM]: "ALREADY IN ROOM",
   [ErrorCode.NOT_HOST]: "NOT HOST",
+  [ErrorCode.ROOM_FULL]: "ROOM IS FULL",
 };
 
 export function isToastErrorCode(code: ErrorCode): code is ToastErrorCode {

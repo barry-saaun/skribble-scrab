@@ -101,7 +101,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/JoinRoomResponse"
         "400":
-          description: Bad request
+          description: Bad request (e.g. invalid username)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: Room is full or player already in room
           content:
             application/json:
               schema:
@@ -112,21 +118,15 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
-        "409":
-          description: Player already in room
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
 
 components:
   schemas:
     ErrorResponse:
       type: object
       properties:
-        error:
+        code:
           type: string
-      required: [error]
+      required: [code]
 
     Role:
       type: string
