@@ -21,6 +21,7 @@ export interface GameState {
   totalRotations: number;
   drawOrder: string[];
   drawerID: string | null;
+  wordLength: number | null;
   secondsRemaining: number | null;
   roundEndingCountdown: number | null;
   roundEndingGuesserID: string | null;

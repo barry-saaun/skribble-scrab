@@ -12,10 +12,11 @@ type chatPayload struct {
 // outgoing payloads
 
 type roundStartPayload struct {
-	Round    int    `json:"round"`
-	DrawerID string `json:"drawerID"`
-	Word     string `json:"word,omitempty"` // only populated for the drawer
-	Status   Status `json:"status"`
+	Round      int    `json:"round"`
+	DrawerID   string `json:"drawerID"`
+	Word       string `json:"word,omitempty"` // only populated for the drawer
+	WordLength int    `json:"wordLength"`
+	Status     Status `json:"status"`
 }
 
 type roundResultPayload struct {

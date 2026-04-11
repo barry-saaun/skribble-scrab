@@ -11,7 +11,7 @@ import (
 )
 
 // TODO: change back to three later. 2 for testing without having to open 3 ws connections
-const minPlayers = 2
+const minPlayers = 1
 
 // TODO: pick a random from the db later
 // Right now: aim for MVP
@@ -118,10 +118,11 @@ func (r *Room) broadcastRoundStart() {
 		b, _ := json.Marshal(outgoingMessage{
 			Type: string(EventRoundStart),
 			Payload: roundStartPayload{
-				Round:    r.Game.CurrentRound,
-				DrawerID: r.Game.DrawerID,
-				Word:     word,
-				Status:   r.Status,
+				Round:      r.Game.CurrentRound,
+				DrawerID:   r.Game.DrawerID,
+				Word:       word,
+				WordLength: len(r.Game.CurrentWord),
+				Status:     r.Status,
 			},
 		})
 		client.Send(b)

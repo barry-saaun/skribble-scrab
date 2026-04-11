@@ -54,6 +54,7 @@ export interface RoundStartPayload {
   round: number;
   drawerID: string;
   word?: string; // only present for the drawer
+  wordLength: number;
   status: GameStatus;
 }
 

@@ -21,6 +21,7 @@ const initGameState: GameState = {
   totalRotations: 0,
   drawOrder: [],
   drawerID: null,
+  wordLength: null,
   secondsRemaining: null,
   roundEndingCountdown: null,
   roundEndingGuesserID: null,
@@ -48,6 +49,7 @@ function gameReducer(state: GameState, action: ServerMessage): GameState {
       return {
         ...state,
         drawerID: action.payload.drawerID,
+        wordLength: action.payload.wordLength,
         currentRound: action.payload.round,
         status: "in_progress",
         secondsRemaining: null,
