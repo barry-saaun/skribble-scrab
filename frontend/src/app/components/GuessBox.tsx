@@ -1,121 +1,116 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { inlineErrorMessages, InlineErrorPayload } from "~/types/errors";
+import { useRef, useState } from "react";
+import { inlineErrorMessages } from "~/types/errors";
 import type { GuessEntry } from "~/types/events";
-import { GameState } from "~/types/game";
+import type { InlineErrorPayload } from "~/types/errors";
 
 export default function GuessBox({
-  guesses,
-  gameState,
+  guessLog,
+  players,
+  playerCount,
   isDrawer,
+  gameStatus,
   onGuess,
   inlineError,
 }: {
-  guesses: GuessEntry[];
-  gameState: GameState;
+  guessLog: GuessEntry[];
+  players: { id: string; userName: string }[];
+  playerCount: number;
   isDrawer: boolean;
+  gameStatus: string;
   onGuess: (word: string) => void;
   inlineError?: InlineErrorPayload;
 }) {
-  const [draft, setDraft] = useState("");
-  const [dismissedError, setDismissedError] = useState<
-    InlineErrorPayload | undefined
-  >();
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [guessInput, setGuessInput] = useState("");
+  const guessBottomRef = useRef<HTMLDivElement>(null);
 
-  const bottomRef = useRef<HTMLDivElement>(null);
-
-  const players = gameState.players;
-
-  useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [guesses]);
-
-  useEffect(() => {
-    if (!inlineError) return;
-    if (timerRef.current !== null) return; // timer already running — don't reset
-
-    timerRef.current = setTimeout(() => {
-      setDismissedError(inlineError);
-      timerRef.current = null;
-    }, 2000);
-  }, [inlineError]);
-
-  // cleanup on unmount only
-  useEffect(() => {
-    return () => {
-      if (timerRef.current !== null) clearTimeout(timerRef.current);
-    };
-  }, []);
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const word = draft.trim();
-    if (!word) return;
-    onGuess(word);
-    setDraft("");
+  const handleGuess = () => {
+    if (!guessInput.trim()) return;
+    onGuess(guessInput.trim());
+    setGuessInput("");
   };
 
-  const nameOf = (id: string) =>
-    players.find((p) => p.id === id)?.userName ?? id;
-
-  const displayError =
-    inlineError && inlineError !== dismissedError
-      ? inlineError.code
-      : undefined;
-
   return (
-    <div className="rounded border border-neutral-700 bg-neutral-900 flex flex-col min-h-0">
-      <p className="px-3 pt-3 pb-2 text-xs font-semibold text-neutral-500 uppercase tracking-wide border-b border-neutral-800">
-        Guesses
-      </p>
-
-      <div className="overflow-y-auto px-3 py-2 flex flex-col gap-1 max-h-40">
-        {guesses.length === 0 ? (
-          <p className="text-neutral-600 italic text-xs mt-1">
+    <div
+      className="flex flex-col flex-1 min-h-0"
+      style={{ borderBottom: "1.5px solid var(--border)" }}
+    >
+      <div
+        className="font-mono text-xs uppercase tracking-widest text-muted-foreground px-3 py-2 shrink-0 flex items-center justify-between"
+        style={{ borderBottom: "1.5px solid var(--border)" }}
+      >
+        <span>{"//"} GUESSES</span>
+        <span className="font-bold text-foreground">{playerCount} ONLINE</span>
+      </div>
+      <div className="flex-1 overflow-y-auto p-3 flex flex-col gap-1.5 min-h-0">
+        {guessLog.length === 0 ? (
+          <p className="font-mono text-xs text-muted-foreground italic">
             No correct guesses yet.
           </p>
         ) : (
-          guesses.map((g, i) => (
-            <div key={i} className="flex items-center gap-2 text-sm">
-              <span className="w-2 h-2 rounded-full bg-green-500 shrink-0" />
-              <span className="font-semibold text-green-300">
-                {nameOf(g.playerID)}
-              </span>
-              <span className="text-neutral-500 text-xs">guessed</span>
-              <span className="text-neutral-300 font-mono text-xs">
-                {g.word}
-              </span>
+          guessLog.map((g, i) => (
+            <div
+              key={i}
+              className="font-mono text-xs px-2 py-1 font-bold"
+              style={{
+                background:
+                  "color-mix(in oklch, var(--primary) 10%, transparent)",
+                border:
+                  "1px solid color-mix(in oklch, var(--primary) 40%, transparent)",
+                color: "var(--primary)",
+              }}
+            >
+              <span style={{ marginRight: "4px" }}>■</span>
+              {players.find((p) => p.id === g.playerID)?.userName} guessed:{" "}
+              {g.word}
             </div>
           ))
         )}
-        <div ref={bottomRef} />
+        <div ref={guessBottomRef} />
       </div>
 
-      {!isDrawer && (
-        <div className="border-t border-neutral-800">
-          {displayError && (
-            <div className="px-3 py-1.5 text-xs text-red-300 bg-red-950/60 border-b border-red-900/40">
-              {inlineErrorMessages[displayError]}
-            </div>
-          )}
-          <form onSubmit={handleSubmit} className="flex">
+      {gameStatus === "in_progress" && !isDrawer && (
+        <div
+          className="p-2 flex flex-col gap-1 shrink-0"
+          style={{ borderTop: "1.5px solid var(--border)" }}
+        >
+          <div className="flex gap-2">
             <input
-              type="text"
-              value={draft}
-              onChange={(e) => setDraft(e.target.value)}
-              placeholder="Your guess…"
-              className="flex-1 bg-transparent px-3 py-2 text-sm text-neutral-200 placeholder-neutral-600 outline-none"
+              className="flex-1 font-mono text-xs py-2 px-3 bg-secondary text-foreground"
+              style={{ border: "1.5px solid var(--border)", outline: "none" }}
+              placeholder="TYPE YOUR GUESS..."
+              value={guessInput}
+              onChange={(e) => setGuessInput(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleGuess()}
+              onFocus={(e) =>
+                (e.target.style.borderColor = "var(--brut-ink)")
+              }
+              onBlur={(e) => (e.target.style.borderColor = "var(--border)")}
             />
             <button
-              type="submit"
-              disabled={!draft.trim()}
-              className="px-3 py-2 text-xs font-semibold text-blue-400 hover:text-blue-200 disabled:opacity-30 transition-colors"
+              onClick={handleGuess}
+              className="font-mono font-bold uppercase tracking-widest text-xs py-2 px-3 transition-all shrink-0"
+              style={{
+                border: "2px solid var(--brut-ink)",
+                background: "var(--brut-ink)",
+                color: "#F8F3E8",
+              }}
             >
-              Guess
+              GUESS
             </button>
-          </form>
+          </div>
+          {inlineError && (
+            <p
+              className="font-mono text-xs font-bold pl-1"
+              style={{
+                borderLeft: "2px solid var(--primary)",
+                color: "var(--primary)",
+              }}
+            >
+              {inlineErrorMessages[inlineError.code] || "Error"}
+            </p>
+          )}
         </div>
       )}
     </div>
