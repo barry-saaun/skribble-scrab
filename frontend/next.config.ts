@@ -3,7 +3,7 @@ import MiniCssExtractPlugin from "mini-css-extract-plugin";
 import "./src/env";
 
 const nextConfig: NextConfig = {
-  output: "export",
+  output: "standalone",
   turbopack: {},
   webpack: (config, { isServer }) => {
     config.plugins.push(new MiniCssExtractPlugin());
