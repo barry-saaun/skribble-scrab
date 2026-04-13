@@ -4,6 +4,7 @@ import "./src/env";
 
 const nextConfig: NextConfig = {
   output: "export",
+  turbopack: {},
   webpack: (config, { isServer }) => {
     config.plugins.push(new MiniCssExtractPlugin());
     return config;
