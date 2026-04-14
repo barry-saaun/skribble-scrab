@@ -39,7 +39,7 @@ func (c *Client) PlayerID() string {
 func (c *Client) ReadPump(r *room.Room) {
 	defer func() {
 		r.RemoveClient(c.playerID)
-		r.BroadcastPlayerList()
+		r.RemovePlayer(c.playerID)
 		close(c.send)
 	}()
 

@@ -75,3 +75,14 @@ type playerListPayload struct {
 type errorPayload struct {
 	Code string `json:"code"`
 }
+
+type playerJoinedPayload struct {
+	ID          string `json:"id"`
+	Username    string `json:"username"`
+	DisplayName string `json:"displayName"`
+	Role        Role   `json:"role"`
+}
+
+type playerLeftPayload struct {
+	PlayerID string `json:"playerID"`
+}

@@ -31,9 +31,24 @@ func (r *Room) AddClient(s Sender) {
 	r.mu.Unlock()
 }
 
+// RemoveClient and RemovePlayer must be used together to fully
+// remove a player from a "Room"
+
 func (r *Room) RemoveClient(playerID string) {
 	r.mu.Lock()
 	delete(r.Clients, playerID)
+	r.mu.Unlock()
+}
+
+func (r *Room) RemovePlayer(playerID string) {
+	r.mu.Lock()
+	delete(r.Players, playerID)
+
+	r.BroadcastEvent(EventPlayerLeft, playerLeftPayload{
+		PlayerID: playerID,
+	})
+
+	r.BroadcastPlayerList()
 	r.mu.Unlock()
 }
 
