@@ -119,7 +119,9 @@ export default function useGameSocket({
   const [guessLog, setGuessLog] = useState<GuessEntry[]>([]);
 
   // Canvas drawing callbacks — registered by parent component
-  const applyStrokeCallback = useRef<((payload: DrawStrokePayload) => void) | null>(null);
+  const applyStrokeCallback = useRef<
+    ((payload: DrawStrokePayload) => void) | null
+  >(null);
   const applyClearCallback = useRef<(() => void) | null>(null);
 
   useEffect(() => {

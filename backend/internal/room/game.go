@@ -8,16 +8,28 @@ import (
 	"math/rand"
 	"strings"
 	"time"
+
+	"github.com/barry-saaun/skribble-scrab/backend/internal/db"
 )
 
 // TODO: change back to three later. 2 for testing without having to open 3 ws connections
 const minPlayers = 1
 
-// TODO: pick a random from the db later
-// Right now: aim for MVP
-var wordList = []string{
+// fallbackWords is used if the DB is unavailable.
+var fallbackWords = []string{
 	"cat", "dog", "house", "tree", "car", "elephant", "guitar", "pizza",
 	"mountain", "ocean", "rocket", "castle", "dragon", "robot", "flower",
+}
+
+func (r *Room) pickWord() string {
+	if r.queries != nil {
+		word, err := r.queries.GetRandomWord(context.Background())
+		if err == nil {
+			return word
+		}
+		log.Printf("[game] DB word fetch failed, using fallback: %v", err)
+	}
+	return fallbackWords[rand.Intn(len(fallbackWords))]
 }
 
 func hasEnoughPlayers(numOfPlayers int) bool {
@@ -71,7 +83,7 @@ func (r *Room) handleGameStart(event Event) {
 		DrawOrder:       playerIDs,
 		DrawerIndex:     0,
 		DrawerID:        playerIDs[0],
-		CurrentWord:     wordList[rand.Intn(len(wordList))],
+		CurrentWord:     r.pickWord(),
 		Scores:          make(map[string]int),
 		GuessedPlayers:  make(map[string]bool),
 		LastGuessAt:     make(map[string]time.Time),
@@ -166,10 +178,12 @@ func (r *Room) advanceDrawer(word string, scores map[string]int) {
 
 		if rotationsRemaining == 0 {
 			r.Status = StatusFinished
+			winner := r.findWinner()
 			r.BroadcastEvent(EventGameEnd, gameEndPayload{
 				Scores: scores,
-				Winner: r.findWinner(),
+				Winner: winner,
 			})
+			go r.persistGameResults(scores)
 			return
 		}
 
@@ -181,7 +195,7 @@ func (r *Room) advanceDrawer(word string, scores map[string]int) {
 	}
 
 	r.Game.DrawerID = r.Game.DrawOrder[r.Game.DrawerIndex]
-	r.Game.CurrentWord = wordList[rand.Intn(len(wordList))]
+	r.Game.CurrentWord = r.pickWord()
 	r.Game.GuessedPlayers = make(map[string]bool)
 	r.Game.LastGuessAt = make(map[string]time.Time)
 	r.Game.GuessCount = make(map[string]int)
@@ -196,6 +210,38 @@ func (r *Room) advanceDrawer(word string, scores map[string]int) {
 	}
 
 	r.broadcastRoundStart()
+}
+
+// persistGameResults writes final scores to the database after a game ends.
+func (r *Room) persistGameResults(scores map[string]int) {
+	if r.queries == nil {
+		return
+	}
+
+	ctx := context.Background()
+
+	r.mu.RLock()
+	players := make(map[string]*Player, len(r.Players))
+	maps.Copy(players, r.Players)
+	r.mu.RUnlock()
+
+	for playerID, score := range scores {
+		p, ok := players[playerID]
+		if !ok {
+			continue
+		}
+		err := r.queries.InsertGameResult(ctx, db.InsertGameResultParams{
+			RoomID:      r.ID,
+			PlayerID:    playerID,
+			DisplayName: p.DisplayName,
+			Score:       int32(score),
+		})
+		if err != nil {
+			log.Printf("[db] failed to persist result for player %s: %v", playerID, err)
+		}
+	}
+
+	log.Printf("[db] persisted game results for room %s", r.ID)
 }
 
 // findWinner returns the player ID with the highest score.
