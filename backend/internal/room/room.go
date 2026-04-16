@@ -43,13 +43,12 @@ func (r *Room) RemoveClient(playerID string) {
 func (r *Room) RemovePlayer(playerID string) {
 	r.mu.Lock()
 	delete(r.Players, playerID)
+	r.mu.Unlock()
 
 	r.BroadcastEvent(EventPlayerLeft, playerLeftPayload{
 		PlayerID: playerID,
 	})
-
 	r.BroadcastPlayerList()
-	r.mu.Unlock()
 }
 
 func (r *Room) Broadcast(msg []byte) {
