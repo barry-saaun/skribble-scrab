@@ -5,7 +5,8 @@ type EventType string
 const (
 	// Player presence
 	EventPlayerJoined EventType = "player.joined"
-	EventPlayerLeft   EventType = "player.left"
+	EventPlayerLeave  EventType = "player.leave" // client → server
+	EventPlayerLeft   EventType = "player.left"  // server → client
 	EventPlayerList   EventType = "room.player_list"
 
 	// Game lifecycle

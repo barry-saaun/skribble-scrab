@@ -119,12 +119,14 @@ export default function useGameSocket({
   const [guessLog, setGuessLog] = useState<GuessEntry[]>([]);
 
   // Canvas drawing callbacks — registered by parent component
-  const applyStrokeCallback = useRef<((payload: DrawStrokePayload) => void) | null>(null);
+  const applyStrokeCallback = useRef<
+    ((payload: DrawStrokePayload) => void) | null
+  >(null);
   const applyClearCallback = useRef<(() => void) | null>(null);
 
   useEffect(() => {
     const ws = new WebSocket(
-      `${env.NEXT_PUBLIC_WS_BASE_URL}/ws?roomID=${encodeURIComponent(roomID)}&playerID=${encodeURIComponent(playerID)}`,
+      `${env.NEXT_PUBLIC_WS_BASE_URL}/api/ws?roomID=${encodeURIComponent(roomID)}&playerID=${encodeURIComponent(playerID)}`,
     );
 
     wsRef.current = ws;
@@ -212,6 +214,7 @@ export default function useGameSocket({
   const sendStroke = (payload: DrawStrokePayload) =>
     send("draw.stroke", payload);
   const sendClear = () => send("draw.clear");
+  const sendLeave = () => send("player.leave");
 
   return {
     gameState,
@@ -224,6 +227,7 @@ export default function useGameSocket({
     sendChat,
     sendStroke,
     sendClear,
+    sendLeave,
     registerDrawCallbacks,
   };
 }

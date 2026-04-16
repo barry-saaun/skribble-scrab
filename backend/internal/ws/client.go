@@ -38,8 +38,9 @@ func (c *Client) PlayerID() string {
 // which signals WritePump to finish.
 func (c *Client) ReadPump(r *room.Room) {
 	defer func() {
+		// This order matter subtly. KEEP IT.
 		r.RemoveClient(c.playerID)
-		r.BroadcastPlayerList()
+		r.RemovePlayer(c.playerID)
 		close(c.send)
 	}()
 

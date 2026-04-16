@@ -5,10 +5,9 @@ import (
 	"math/big"
 	"sync"
 	"time"
-)
 
-// INFO:  This file is essentialy only used for in-memory implementation.
-// NO NEED when DB is implemented
+	"github.com/barry-saaun/skribble-scrab/backend/internal/db"
+)
 
 const idAlphabet = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 
@@ -16,13 +15,15 @@ const idAlphabet = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567
 const MaxPlayers = 6
 
 type RoomManager struct {
-	rooms map[string]*Room
-	mu    sync.RWMutex
+	rooms   map[string]*Room
+	queries *db.Queries
+	mu      sync.RWMutex
 }
 
-func NewRoomManager() *RoomManager {
+func NewRoomManager(queries *db.Queries) *RoomManager {
 	return &RoomManager{
-		rooms: make(map[string]*Room),
+		rooms:   make(map[string]*Room),
+		queries: queries,
 	}
 }
 
@@ -48,6 +49,7 @@ func (m *RoomManager) CreateRoom(hostID, hostUsername, HostDisplayName string) *
 		Events:          make(chan Event, 256),
 		Status:          StatusWaiting,
 		CreatedAt:       time.Now(),
+		queries:         m.queries,
 	}
 
 	m.mu.Lock()

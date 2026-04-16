@@ -4,6 +4,8 @@ import (
 	"context"
 	"sync"
 	"time"
+
+	"github.com/barry-saaun/skribble-scrab/backend/internal/db"
 )
 
 type Role string
@@ -42,7 +44,11 @@ type Room struct {
 	Events          chan Event
 	Status          Status
 	CreatedAt       time.Time
+	queries         *db.Queries
 	mu              sync.RWMutex
+
+	// TEMPORARY: in-memory
+	manager *RoomManager
 }
 
 type GameState struct {

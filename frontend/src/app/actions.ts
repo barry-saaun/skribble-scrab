@@ -11,9 +11,14 @@ export async function createRoom(formData: FormData) {
 
   const hostID = crypto.randomUUID();
 
-  const { data, error } = await api.POST("/api/rooms", {
-    body: { hostID, hostUsername: displayName, hostDisplayName: displayName },
-  });
+  let data, error;
+  try {
+    ({ data, error } = await api.POST("/api/rooms", {
+      body: { hostID, hostUsername: displayName, hostDisplayName: displayName },
+    }));
+  } catch {
+    return;
+  }
 
   if (error ?? !data) return;
 
@@ -33,14 +38,19 @@ export async function joinRoomAction(
 
   const playerID = crypto.randomUUID();
 
-  const { error: joinError } = await api.POST("/api/rooms/{roomID}/join", {
-    params: { path: { roomID: roomCode } },
-    body: {
-      playerID,
-      playerUsername: displayName,
-      playerDisplayName: displayName,
-    },
-  });
+  let joinError;
+  try {
+    ({ error: joinError } = await api.POST("/api/rooms/{roomID}/join", {
+      params: { path: { roomID: roomCode } },
+      body: {
+        playerID,
+        playerUsername: displayName,
+        playerDisplayName: displayName,
+      },
+    }));
+  } catch {
+    redirect(`/error?code=ROOM_NOT_FOUND&room=${encodeURIComponent(roomCode)}`);
+  }
 
   if (joinError?.code === ErrorCode.ROOM_FULL) {
     return { error: ErrorCode.ROOM_FULL };

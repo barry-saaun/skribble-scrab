@@ -1,13 +1,16 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"log"
 	"net/http"
 
 	"github.com/barry-saaun/skribble-scrab/backend/internal/config"
+	"github.com/barry-saaun/skribble-scrab/backend/internal/db"
 	"github.com/barry-saaun/skribble-scrab/backend/internal/room"
 	"github.com/barry-saaun/skribble-scrab/backend/internal/ws"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/joho/godotenv"
 )
 
@@ -15,13 +18,26 @@ var cfg config.Config
 
 func main() {
 	// Load .env.local from repo root (silently ignored if absent — e.g. in production)
-	_ = godotenv.Load("../../.env.local")
+	_ = godotenv.Load("../.env.local")
 
 	cfg = config.Load()
 
+	pool, err := pgxpool.New(context.Background(), cfg.DatabaseURL)
+	if err != nil {
+		log.Fatalf("unable to connect to database: %v", err)
+	}
+	defer pool.Close()
+
+	if err := pool.Ping(context.Background()); err != nil {
+		log.Fatalf("database ping failed: %v", err)
+	}
+	log.Println("database connected")
+
+	queries := db.New(pool)
+
 	mux := http.NewServeMux()
 
-	roomManager := room.NewRoomManager()
+	roomManager := room.NewRoomManager(queries)
 	roomHandler := room.NewRoomHandler(roomManager)
 	room.RegisterRoutes(mux, roomHandler)
 
