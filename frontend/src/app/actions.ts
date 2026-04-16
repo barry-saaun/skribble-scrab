@@ -17,6 +17,7 @@ export async function createRoom(formData: FormData) {
       body: { hostID, hostUsername: displayName, hostDisplayName: displayName },
     }));
   } catch {
+    console.error("[room]: failed to create room");
     return;
   }
 

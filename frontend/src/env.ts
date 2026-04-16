@@ -7,12 +7,26 @@ export const env = createEnv({
     BACKEND_URL: z.url().default("http://localhost:8080"),
   },
   client: {
-    NEXT_PUBLIC_WS_BASE_URL: z.url(),
+    NEXT_PUBLIC_WS_BASE_URL: z
+      .string()
+      .default(
+        process.env.NODE_ENV === "development"
+          ? "ws://localhost:8080"
+          : "wss://skribble-scrab-backend.fly.dev",
+      ),
+    NEXT_PUBLIC_API_BASE_URL: z
+      .string()
+      .default(
+        process.env.NODE_ENV === "development"
+          ? "http://localhost:8080"
+          : "https://skribble-scrab-backend.fly.dev",
+      ),
   },
   runtimeEnv: {
     NODE_ENV: process.env.NODE_ENV,
     BACKEND_URL: process.env.BACKEND_URL,
     NEXT_PUBLIC_WS_BASE_URL: process.env.NEXT_PUBLIC_WS_BASE_URL,
+    NEXT_PUBLIC_API_BASE_URL: process.env.NEXT_PUBLIC_API_BASE_URL,
   },
   /**
    * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation. This is especially
