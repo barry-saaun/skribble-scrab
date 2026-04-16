@@ -41,14 +41,31 @@ func (r *Room) RemoveClient(playerID string) {
 }
 
 func (r *Room) RemovePlayer(playerID string) {
+	log.Printf("[room] removing player %s from room %s", playerID, r.ID)
+
 	r.mu.Lock()
 	delete(r.Players, playerID)
+	delete(r.Clients, playerID)
 	r.mu.Unlock()
 
 	r.BroadcastEvent(EventPlayerLeft, playerLeftPayload{
 		PlayerID: playerID,
 	})
 	r.BroadcastPlayerList()
+
+	// Game impact
+	if r.Status == StatusInProgress {
+		r.handlePlayerLeaveInGame(playerID)
+	}
+
+	empty := len(r.Players) == 0
+	roomID := r.ID
+
+	if empty {
+		log.Printf("[room] room %s is empty, removing", roomID)
+		r.manager.RemoveRoom(roomID)
+		return
+	}
 }
 
 func (r *Room) Broadcast(msg []byte) {
@@ -136,6 +153,8 @@ func (r *Room) BroadcastPlayerList() {
 func (r *Room) Run() {
 	for event := range r.Events {
 		switch event.Type {
+		case EventPlayerLeave:
+			r.RemovePlayer(event.PlayerID)
 		case EventGameStart:
 			r.handleGameStart(event)
 		case EventChatMessage:

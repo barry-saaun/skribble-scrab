@@ -214,6 +214,7 @@ export default function useGameSocket({
   const sendStroke = (payload: DrawStrokePayload) =>
     send("draw.stroke", payload);
   const sendClear = () => send("draw.clear");
+  const sendLeave = () => send("player.leave");
 
   return {
     gameState,
@@ -226,6 +227,7 @@ export default function useGameSocket({
     sendChat,
     sendStroke,
     sendClear,
+    sendLeave,
     registerDrawCallbacks,
   };
 }

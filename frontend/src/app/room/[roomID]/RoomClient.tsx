@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import useGameSocket from "~/hooks/useGameSocket";
 import Canvas from "~/app/components/Canvas";
@@ -25,6 +26,7 @@ export default function RoomClient({
   playerID: string;
   username: string;
 }) {
+  const router = useRouter();
   const {
     gameState,
     drawerWord,
@@ -36,11 +38,17 @@ export default function RoomClient({
     sendGuess,
     sendStroke,
     sendClear,
+    sendLeave,
     registerDrawCallbacks,
   } = useGameSocket({ roomID, playerID });
 
   const [gameEndDismissed, setGameEndDismissed] = useState(false);
   const canvasRef = useRef<CanvasHandle>(null);
+
+  const handleLeave = useCallback(() => {
+    sendLeave();
+    router.push("/");
+  }, [sendLeave, router]);
 
   const lastError = gameState.lastError;
 
@@ -105,6 +113,7 @@ export default function RoomClient({
         style={{ borderBottom: "2px solid var(--brut-ink)" }}
       >
         <button
+          onClick={handleLeave}
           className="font-mono font-bold uppercase tracking-widest text-[10px] py-1.5 px-3 bg-transparent shrink-0 transition-all"
           style={{
             border: "2px solid var(--brut-ink)",

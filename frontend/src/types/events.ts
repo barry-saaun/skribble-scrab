@@ -9,6 +9,7 @@ export type EventType =
   // Presence
   | "room.player_list"
   | "player.joined"
+  | "player.leave"
   | "player.left"
   // Game lifecycle
   | "game.start"

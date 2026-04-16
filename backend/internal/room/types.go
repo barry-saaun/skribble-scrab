@@ -46,6 +46,9 @@ type Room struct {
 	CreatedAt       time.Time
 	queries         *db.Queries
 	mu              sync.RWMutex
+
+	// TEMPORARY: in-memory
+	manager *RoomManager
 }
 
 type GameState struct {

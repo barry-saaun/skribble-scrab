@@ -333,3 +333,65 @@ func (r *Room) handlePlayerGuess(event Event) {
 		r.Events <- Event{Type: EventRoundEndingDone, Payload: capturedRound}
 	}()
 }
+
+func (r *Room) handlePlayerLeaveInGame(playerID string) {
+	log.Printf("[leave] player %s leaving during game (status=%s, drawer=%s)", playerID, r.Status, r.Game.DrawerID)
+
+	// 1. Remove from DrawOrder & check if they were the drawer
+	var newDrawOrder []string
+	wasDrawer := false
+	var drawerPos int
+
+	for i, id := range r.Game.DrawOrder {
+		if id == playerID {
+			wasDrawer = (id == r.Game.DrawerID)
+			drawerPos = i
+		} else {
+			newDrawOrder = append(newDrawOrder, id)
+		}
+	}
+
+	r.Game.DrawOrder = newDrawOrder
+	log.Printf("[leave] removed from draw order (wasDrawer=%v, drawerPos=%d, remaining=%d)", wasDrawer, drawerPos, len(r.Game.DrawOrder))
+
+	// 2. Clean up game state maps
+	delete(r.Game.Scores, playerID)
+	delete(r.Game.GuessedPlayers, playerID)
+	delete(r.Game.LastGuessAt, playerID)
+	delete(r.Game.GuessCount, playerID)
+
+	// 3. If they were the drawer, advance the round
+	if wasDrawer {
+		if r.Game.Timer != nil {
+			r.Game.Timer()
+		}
+
+		if len(r.Game.DrawOrder) == 0 {
+			log.Printf("[leave] no players left, ending game")
+			r.endGameEarly()
+			return
+		}
+
+		log.Printf("[leave] was drawer, advancing to next")
+		r.advanceDrawer(r.Game.CurrentWord, r.Game.Scores)
+	} else if drawerPos < r.Game.DrawerIndex {
+		r.Game.DrawerIndex--
+		log.Printf("[leave] adjusted drawer index to %d", r.Game.DrawerIndex)
+	}
+
+	// 4. Check if enough players remain
+	if !hasEnoughPlayers(len(r.Game.DrawOrder)) {
+		log.Printf("[leave] not enough players (%d), ending game", len(r.Game.DrawOrder))
+		r.endGameEarly()
+	}
+}
+
+func (r *Room) endGameEarly() {
+	r.Status = StatusFinished
+	winner := r.findWinner()
+	r.BroadcastEvent(EventGameEnd, gameEndPayload{
+		Scores: r.Game.Scores,
+		Winner: winner,
+	})
+	go r.persistGameResults(r.Game.Scores)
+}
