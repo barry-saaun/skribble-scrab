@@ -68,6 +68,12 @@ func (m *RoomManager) GetRoom(roomID string) (*Room, bool) {
 	return r, ok
 }
 
+func (m *RoomManager) RemoveRoom(roomID string) {
+	m.mu.Lock()
+	delete(m.rooms, roomID)
+	m.mu.Unlock()
+}
+
 func generateID(n int) string {
 	b := make([]byte, n)
 	max := big.NewInt(int64(len(idAlphabet)))
