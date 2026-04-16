@@ -125,13 +125,26 @@ export default function useGameSocket({
   const applyClearCallback = useRef<(() => void) | null>(null);
 
   useEffect(() => {
+    let cleaned = false;
+
+    console.log(
+      "[ws]: ",
+      `${env.NEXT_PUBLIC_WS_BASE_URL}/api/ws?roomID=${encodeURIComponent(roomID)}&playerID=${encodeURIComponent(playerID)}`,
+    );
+
     const ws = new WebSocket(
       `${env.NEXT_PUBLIC_WS_BASE_URL}/api/ws?roomID=${encodeURIComponent(roomID)}&playerID=${encodeURIComponent(playerID)}`,
     );
 
     wsRef.current = ws;
 
-    ws.onopen = () => setIsConnected(true);
+    ws.onopen = () => {
+      if (cleaned) {
+        ws.close();
+        return;
+      }
+      setIsConnected(true);
+    };
     ws.onclose = () => setIsConnected(false);
 
     ws.onmessage = (e: MessageEvent) => {
@@ -185,7 +198,14 @@ export default function useGameSocket({
       }
     };
 
-    return () => ws.close();
+    return () => {
+      cleaned = true;
+      if (ws.readyState === WebSocket.CONNECTING) {
+        ws.onopen = () => ws.close();
+      } else {
+        ws.close();
+      }
+    };
   }, [roomID, playerID]);
 
   // ---- Draw callback registration ----

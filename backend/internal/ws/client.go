@@ -38,10 +38,11 @@ func (c *Client) PlayerID() string {
 // which signals WritePump to finish.
 func (c *Client) ReadPump(r *room.Room) {
 	defer func() {
-		// This order matter subtly. KEEP IT.
 		r.RemoveClient(c.playerID)
-		r.RemovePlayer(c.playerID)
 		close(c.send)
+		// Notify the room the WS dropped — Run() will remove the player if they
+		// didn't already leave via an explicit player.leave event.
+		r.Events <- room.Event{Type: room.EventPlayerDisconnect, PlayerID: c.playerID}
 	}()
 
 	for {

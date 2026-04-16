@@ -4,6 +4,7 @@ package room
 import (
 	"encoding/json"
 	"log"
+	"time"
 )
 
 // Sender is implemented by ws.Client — defined here to avoid an import cycle.
@@ -154,7 +155,26 @@ func (r *Room) Run() {
 	for event := range r.Events {
 		switch event.Type {
 		case EventPlayerLeave:
-			r.RemovePlayer(event.PlayerID)
+			if _, ok := r.GetPlayer(event.PlayerID); ok {
+				r.RemovePlayer(event.PlayerID)
+			}
+
+		case EventPlayerDisconnect:
+			// Give the player a short window to reconnect (handles React StrictMode
+			// double-mount, brief network hiccups, etc.). If they haven't reconnected
+			// after the grace period, remove them.
+			playerID := event.PlayerID
+			go func() {
+				time.Sleep(5 * time.Second)
+				r.mu.RLock()
+				_, reconnected := r.Clients[playerID]
+				r.mu.RUnlock()
+				if !reconnected {
+					if _, ok := r.GetPlayer(playerID); ok {
+						r.RemovePlayer(playerID)
+					}
+				}
+			}()
 		case EventGameStart:
 			r.handleGameStart(event)
 		case EventChatMessage:

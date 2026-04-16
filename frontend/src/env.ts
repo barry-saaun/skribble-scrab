@@ -7,13 +7,7 @@ export const env = createEnv({
     BACKEND_URL: z.url().default("http://localhost:8080"),
   },
   client: {
-    NEXT_PUBLIC_WS_BASE_URL: z
-      .string()
-      .default(
-        process.env.NODE_ENV === "development"
-          ? "ws://localhost:8080"
-          : "wss://skribble-scrab-backend.fly.dev",
-      ),
+    NEXT_PUBLIC_WS_BASE_URL: z.string().default("ws://localhost:8080"),
     NEXT_PUBLIC_API_BASE_URL: z
       .string()
       .default(

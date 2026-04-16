@@ -4,10 +4,11 @@ type EventType string
 
 const (
 	// Player presence
-	EventPlayerJoined EventType = "player.joined"
-	EventPlayerLeave  EventType = "player.leave" // client → server
-	EventPlayerLeft   EventType = "player.left"  // server → client
-	EventPlayerList   EventType = "room.player_list"
+	EventPlayerJoined     EventType = "player.joined"
+	EventPlayerLeave      EventType = "player.leave"      // client → server: explicit leave
+	EventPlayerDisconnect EventType = "player.disconnect" // internal: WS closed without explicit leave
+	EventPlayerLeft       EventType = "player.left"       // server → client
+	EventPlayerList       EventType = "room.player_list"
 
 	// Game lifecycle
 	EventGameStart EventType = "game.start"
