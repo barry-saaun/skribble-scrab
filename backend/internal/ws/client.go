@@ -10,12 +10,14 @@ import (
 
 const sendBufferSize = 256
 
-func NewClient(conn *websocket.Conn, roomID, playerID string) *Client {
+func NewClient(conn *websocket.Conn, roomID, playerID, username, displayName string) *Client {
 	return &Client{
-		conn:     conn,
-		roomID:   roomID,
-		playerID: playerID,
-		send:     make(chan []byte, sendBufferSize),
+		conn:        conn,
+		roomID:      roomID,
+		playerID:    playerID,
+		username:    username,
+		displayName: displayName,
+		send:        make(chan []byte, sendBufferSize),
 	}
 }
 
@@ -37,11 +39,14 @@ func (c *Client) PlayerID() string {
 // On exit it removes the client from the room and closes the send channel,
 // which signals WritePump to finish.
 func (c *Client) ReadPump(r *room.Room) {
+	log.Printf("[ws] ReadPump started  — player %s (%s / %s)", c.playerID, c.username, c.displayName)
 	defer func() {
+		log.Printf("[ws] ReadPump exiting  — player %s (%s / %s): removing client, closing send channel", c.playerID, c.username, c.displayName)
 		r.RemoveClient(c.playerID)
 		close(c.send)
 		// Notify the room the WS dropped — Run() will remove the player if they
 		// didn't already leave via an explicit player.leave event.
+		log.Printf("[ws] ReadPump exiting  — player %s (%s / %s): firing EventPlayerDisconnect", c.playerID, c.username, c.displayName)
 		r.Events <- room.Event{Type: room.EventPlayerDisconnect, PlayerID: c.playerID}
 	}()
 
@@ -76,12 +81,17 @@ func (c *Client) ReadPump(r *room.Room) {
 // WritePump writes outbound messages from the send channel to the WebSocket.
 // Runs in its own goroutine. Closes the connection when the send channel is closed.
 func (c *Client) WritePump() {
-	defer c.conn.Close()
+	log.Printf("[ws] WritePump started  — player %s (%s / %s)", c.playerID, c.username, c.displayName)
+	defer func() {
+		log.Printf("[ws] WritePump exiting — player %s (%s / %s): closing WS connection", c.playerID, c.username, c.displayName)
+		c.conn.Close()
+	}()
 
 	for msg := range c.send {
 		if err := c.conn.WriteMessage(websocket.TextMessage, msg); err != nil {
-			log.Printf("client %s write error: %v", c.playerID, err)
+			log.Printf("[ws] WritePump write error — player %s (%s / %s): %v", c.playerID, c.username, c.displayName, err)
 			return
 		}
 	}
+	log.Printf("[ws] WritePump send channel drained — player %s (%s / %s): WS connection will close", c.playerID, c.username, c.displayName)
 }

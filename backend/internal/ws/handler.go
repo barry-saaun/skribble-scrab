@@ -52,7 +52,7 @@ func (h *Handler) HandleWS(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	client := NewClient(conn, roomID, player.ID)
+	client := NewClient(conn, roomID, player.ID, player.Username, player.DisplayName)
 	room.AddClient(client)
 
 	room.BroadcastPlayerList()

@@ -42,12 +42,25 @@ func (r *Room) RemoveClient(playerID string) {
 }
 
 func (r *Room) RemovePlayer(playerID string) {
-	log.Printf("[room] removing player %s from room %s", playerID, r.ID)
+	// Capture display info before deleting so we can include it in logs.
+	r.mu.RLock()
+	p, hadPlayer := r.Players[playerID]
+	_, hadClient := r.Clients[playerID]
+	r.mu.RUnlock()
+
+	username, displayName := "", ""
+	if hadPlayer {
+		username, displayName = p.Username, p.DisplayName
+	}
+	log.Printf("[room] RemovePlayer — player %s (%s / %s) from room %s (hadPlayer=%v, hadClient=%v)",
+		playerID, username, displayName, r.ID, hadPlayer, hadClient)
 
 	r.mu.Lock()
 	delete(r.Players, playerID)
 	delete(r.Clients, playerID)
 	r.mu.Unlock()
+
+	log.Printf("[room] RemovePlayer — player %s (%s / %s) evicted from Players+Clients maps", playerID, username, displayName)
 
 	r.BroadcastEvent(EventPlayerLeft, playerLeftPayload{
 		PlayerID: playerID,
@@ -164,15 +177,19 @@ func (r *Room) Run() {
 			// double-mount, brief network hiccups, etc.). If they haven't reconnected
 			// after the grace period, remove them.
 			playerID := event.PlayerID
+			log.Printf("[room] EventPlayerDisconnect — player %s disconnected, starting 5s grace period", playerID)
 			go func() {
 				time.Sleep(5 * time.Second)
 				r.mu.RLock()
 				_, reconnected := r.Clients[playerID]
 				r.mu.RUnlock()
-				if !reconnected {
-					if _, ok := r.GetPlayer(playerID); ok {
-						r.RemovePlayer(playerID)
-					}
+				if reconnected {
+					log.Printf("[room] grace period elapsed — player %s reconnected, skipping removal", playerID)
+					return
+				}
+				log.Printf("[room] grace period elapsed — player %s did not reconnect, removing", playerID)
+				if _, ok := r.GetPlayer(playerID); ok {
+					r.RemovePlayer(playerID)
 				}
 			}()
 		case EventGameStart:

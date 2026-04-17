@@ -8,10 +8,12 @@ import (
 )
 
 type Client struct {
-	conn     *websocket.Conn
-	roomID   string
-	playerID string
-	send     chan []byte
+	conn        *websocket.Conn
+	roomID      string
+	playerID    string
+	username    string
+	displayName string
+	send        chan []byte
 }
 
 type IncomingMessage struct {
