@@ -39,6 +39,10 @@ export interface PlayerListPayload {
   players: Player[];
 }
 
+export interface PlayerLeftPayload {
+  playerID: string;
+}
+
 export interface RotationStartPayload {
   rotationNumber: number;
   totalRotations: number;
@@ -137,6 +141,7 @@ export interface ChatSendPayload {
 
 export type ServerMessage =
   | { type: "room.player_list"; payload: PlayerListPayload }
+  | { type: "player.left"; payload: PlayerLeftPayload }
   | { type: "rotation.start"; payload: RotationStartPayload }
   | { type: "rotation.complete"; payload: RotationCompletePayload }
   | { type: "round.start"; payload: RoundStartPayload }

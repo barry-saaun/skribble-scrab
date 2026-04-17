@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useReducer, useRef, useState } from "react";
+import { useToast } from "~/hooks/useToast";
 import { env } from "~/env";
 import type {
   ChatEntry,
@@ -108,6 +109,7 @@ export default function useGameSocket({
   roomID: string;
   playerID: string;
 }) {
+  const { info } = useToast();
   const wsRef = useRef<WebSocket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const [gameState, dispatch] = useReducer(gameReducer, initGameState);
@@ -147,6 +149,16 @@ export default function useGameSocket({
         const msg = JSON.parse(e.data as string) as ServerMessage;
 
         // Intercept the drawer's word before dispatching — keep it out of shared state
+
+        if (msg.type === "player.left") {
+          const leavingPlayer = gameState.players.find(
+            (p) => p.id === msg.payload.playerID,
+          );
+          const name = leavingPlayer?.userName ?? "A player";
+
+          info(`${name} has left the room`);
+        }
+
         if (msg.type === "round.start") {
           setDrawerWord(msg.payload.word ?? null);
           // Clear logs at the start of each round
