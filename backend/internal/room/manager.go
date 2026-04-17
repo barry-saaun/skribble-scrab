@@ -50,6 +50,7 @@ func (m *RoomManager) CreateRoom(hostID, hostUsername, HostDisplayName string) *
 		Status:          StatusWaiting,
 		CreatedAt:       time.Now(),
 		queries:         m.queries,
+		manager:         m,
 	}
 
 	m.mu.Lock()
