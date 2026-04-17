@@ -41,12 +41,14 @@ export default function RootLayout({
           gap={8}
           toastOptions={{
             classNames: {
-              toast:
-                "!rounded-none !border-2 !border-neutral-700 !bg-neutral-950 !text-neutral-100 !font-mono !shadow-none",
-              error: "!border-red-500",
+              // Structural only — no bg/color/border-color here so info & success
+              // toasts can apply their own styles via inline `style` without fighting
+              // !important class overrides.
+              toast: "!rounded-none !border-2 !font-mono !shadow-none",
+              error:
+                "!border-red-500 !bg-neutral-950 !text-neutral-100 [&_[data-description]]:!text-neutral-500",
               title: "!font-bold !uppercase !tracking-widest !text-xs",
-              description:
-                "!font-mono !text-neutral-500 !text-xs !uppercase !tracking-wider",
+              description: "!font-mono !text-xs !uppercase !tracking-wider",
               closeButton:
                 "!rounded-none !border !border-neutral-700 !bg-neutral-900 !text-neutral-400 hover:!text-neutral-100",
             },
