@@ -5,9 +5,12 @@ import { api } from "~/api/client";
 import { ErrorCode } from "~/types/errors";
 
 // Just for MVP for now, in the future, integrate DB
-export async function createRoom(formData: FormData) {
+export async function createRoom(
+  _prevState: { error: string } | null,
+  formData: FormData,
+): Promise<{ error: string } | null> {
   const displayName = (formData.get("displayName") as string)?.trim();
-  if (!displayName) return;
+  if (!displayName) return { error: ErrorCode.USERNAME_INVALID };
 
   const hostID = crypto.randomUUID();
 
@@ -17,11 +20,11 @@ export async function createRoom(formData: FormData) {
       body: { hostID, hostUsername: displayName, hostDisplayName: displayName },
     }));
   } catch {
-    console.error("[room]: failed to create room");
-    return;
+    return { error: "NETWORK_ERROR" };
   }
 
-  if (error ?? !data) return;
+  if (error) return { error: error.code };
+  if (!data) return { error: "NETWORK_ERROR" };
 
   redirect(
     `/room/${data.roomID}?playerID=${encodeURIComponent(hostID)}&username=${encodeURIComponent(displayName)}`,

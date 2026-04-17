@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { CreateRoomTab, JoinByCodeTab, BrowseRoomsTab } from "./LobbyTabs";
+import { CreateRoomTab, JoinByCodeTab, BrowseRoomsTab, USERNAME_REGEX } from "./LobbyTabs";
 
 type Tab = "browse" | "create" | "join";
 
@@ -69,9 +69,14 @@ export function Lobby() {
         value={defaultDisplayName}
         onChange={(e) => setDefaultDisplayName(e.target.value)}
         placeholder="ENTER USERNAME..."
-        maxLength={24}
+        maxLength={20}
         className="w-full border-2 border-foreground bg-input px-3 py-2 text-sm tracking-wider placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:ring-offset-background"
       />
+      {defaultDisplayName && !USERNAME_REGEX.test(defaultDisplayName) && (
+        <p className="mt-2 text-xs text-destructive uppercase tracking-wider">
+          3–20 CHARS · LETTERS, NUMBERS, _ OR - · NO SPACES
+        </p>
+      )}
       <div className="flex items-center gap-3 mt-4">
         <button className="border-2 border-foreground w-8 h-8 flex items-center justify-center font-bold text-accent hover:bg-accent hover:text-accent-foreground transition-colors">
           {defaultDisplayName === ""

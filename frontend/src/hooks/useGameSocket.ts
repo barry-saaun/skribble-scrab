@@ -127,11 +127,6 @@ export default function useGameSocket({
   useEffect(() => {
     let cleaned = false;
 
-    console.log(
-      "[ws]: ",
-      `${env.NEXT_PUBLIC_WS_BASE_URL}/api/ws?roomID=${encodeURIComponent(roomID)}&playerID=${encodeURIComponent(playerID)}`,
-    );
-
     const ws = new WebSocket(
       `${env.NEXT_PUBLIC_WS_BASE_URL}/api/ws?roomID=${encodeURIComponent(roomID)}&playerID=${encodeURIComponent(playerID)}`,
     );

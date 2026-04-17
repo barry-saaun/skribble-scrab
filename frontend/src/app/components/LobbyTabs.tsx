@@ -5,9 +5,13 @@ import { toast } from "sonner";
 import { createRoom, joinRoomAction } from "../actions";
 import {
   ErrorCode,
+  errorMessages,
   toastErrorTitles,
   toastErrorMessages,
 } from "~/types/errors";
+
+// Must mirror backend: ^[a-zA-Z0-9][a-zA-Z0-9_-]{1,18}[a-zA-Z0-9]$
+export const USERNAME_REGEX = /^[a-zA-Z0-9][a-zA-Z0-9_-]{1,18}[a-zA-Z0-9]$/;
 
 const PLACEHOLDER_ROOMS = [
   {
@@ -53,7 +57,7 @@ function BrowseRoomsTab({
 }: {
   defaultDisplayName: string;
 }) {
-  const isDisabled = !defaultDisplayName;
+  const isDisabled = !USERNAME_REGEX.test(defaultDisplayName);
 
   return (
     <div>
@@ -137,11 +141,23 @@ function BrowseRoomsTab({
 }
 
 function CreateRoomTab({ defaultDisplayName }: { defaultDisplayName: string }) {
-  const isDisabled = !defaultDisplayName;
+  const [state, formAction] = useActionState(createRoom, null);
+  const isDisabled = !USERNAME_REGEX.test(defaultDisplayName);
+
+  useEffect(() => {
+    if (!state?.error) return;
+    const code = state.error;
+    const known = code in ErrorCode ? (code as keyof typeof ErrorCode) : null;
+    toast.error(known ? "FAILED TO CREATE ROOM" : "NETWORK ERROR", {
+      description: known
+        ? errorMessages[ErrorCode[known]]
+        : "Could not reach the server. Please try again.",
+    });
+  }, [state]);
 
   return (
     <div className="flex justify-center">
-      <form action={createRoom} className="w-full max-w-md space-y-4">
+      <form action={formAction} className="w-full max-w-md space-y-4">
         <input
           type="hidden"
           name="displayName"
@@ -205,7 +221,7 @@ function JoinByCodeTab({
   const [state, formAction] = useActionState(joinRoomAction, null);
   const roomCode = codeInput.join("");
   const isDisabled =
-    !defaultDisplayName.trim() || codeInput.some((char) => !char);
+    !USERNAME_REGEX.test(defaultDisplayName) || codeInput.some((char) => !char);
 
   useEffect(() => {
     if (state?.error === ErrorCode.ROOM_FULL) {
