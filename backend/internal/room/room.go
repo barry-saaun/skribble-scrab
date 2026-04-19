@@ -41,6 +41,17 @@ func (r *Room) RemoveClient(playerID string) {
 	r.mu.Unlock()
 }
 
+// RemoveClientIfSame removes the client only when it is still the registered sender for that
+// playerID. This prevents a stale ReadPump teardown from evicting a newer client that has
+// already replaced the old one in the Clients map (e.g. React StrictMode double-mount).
+func (r *Room) RemoveClientIfSame(s Sender) {
+	r.mu.Lock()
+	if existing, ok := r.Clients[s.PlayerID()]; ok && existing == s {
+		delete(r.Clients, s.PlayerID())
+	}
+	r.mu.Unlock()
+}
+
 func (r *Room) RemovePlayer(playerID string) {
 	// Capture display info before deleting so we can include it in logs.
 	r.mu.RLock()

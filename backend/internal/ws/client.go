@@ -42,7 +42,7 @@ func (c *Client) ReadPump(r *room.Room) {
 	log.Printf("[ws] ReadPump started  — player %s (%s / %s)", c.playerID, c.username, c.displayName)
 	defer func() {
 		log.Printf("[ws] ReadPump exiting  — player %s (%s / %s): removing client, closing send channel", c.playerID, c.username, c.displayName)
-		r.RemoveClient(c.playerID)
+		r.RemoveClientIfSame(c) // identity-safe: won't evict a newer client for the same playerID
 		close(c.send)
 		// Notify the room the WS dropped — Run() will remove the player if they
 		// didn't already leave via an explicit player.leave event.
@@ -53,7 +53,11 @@ func (c *Client) ReadPump(r *room.Room) {
 	for {
 		_, msg, err := c.conn.ReadMessage()
 		if err != nil {
-			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
+			if websocket.IsUnexpectedCloseError(err,
+				websocket.CloseGoingAway,
+				websocket.CloseNormalClosure,
+				websocket.CloseAbnormalClosure,
+			) {
 				log.Printf("client %s read error: %v", c.playerID, err)
 			}
 			break

@@ -125,6 +125,18 @@ export default function useGameSocket({
   const [chatLog, setChatLog] = useState<ChatEntry[]>([]);
   const [guessLog, setGuessLog] = useState<GuessEntry[]>([]);
 
+  // Stable refs for values used inside the WS onmessage closure that must NOT be
+  // listed as useEffect deps — doing so would recreate the WebSocket on every change.
+  const playersRef = useRef(gameState.players);
+  const infoRef = useRef(info);
+
+  useEffect(() => {
+    playersRef.current = gameState.players;
+  });
+
+  useEffect(() => {
+    infoRef.current = info;
+  });
   // Canvas drawing callbacks — registered by parent component
   const applyStrokeCallback = useRef<
     ((payload: DrawStrokePayload) => void) | null
@@ -132,8 +144,6 @@ export default function useGameSocket({
   const applyClearCallback = useRef<(() => void) | null>(null);
 
   useEffect(() => {
-    let cleaned = false;
-
     const ws = new WebSocket(
       `${env.NEXT_PUBLIC_WS_BASE_URL}/api/ws?roomID=${encodeURIComponent(roomID)}&playerID=${encodeURIComponent(playerID)}`,
     );
@@ -141,13 +151,17 @@ export default function useGameSocket({
     wsRef.current = ws;
 
     ws.onopen = () => {
-      if (cleaned) {
+      if (wsRef.current !== ws) {
         ws.close();
         return;
       }
       setIsConnected(true);
     };
-    ws.onclose = () => setIsConnected(false);
+    ws.onclose = () => {
+      if (wsRef.current === ws) {
+        setIsConnected(false);
+      }
+    };
 
     ws.onmessage = (e: MessageEvent) => {
       try {
@@ -156,12 +170,11 @@ export default function useGameSocket({
         // Intercept the drawer's word before dispatching — keep it out of shared state
 
         if (msg.type === "player.left") {
-          const leavingPlayer = gameState.players.find(
+          const leavingPlayer = playersRef.current.find(
             (p) => p.id === msg.payload.playerID,
           );
           const name = leavingPlayer?.userName ?? "A player";
-
-          info(`${name} has left the room`);
+          infoRef.current(`${name} has left the room`);
         }
 
         if (msg.type === "round.start") {
@@ -211,14 +224,33 @@ export default function useGameSocket({
     };
 
     return () => {
-      cleaned = true;
-      if (ws.readyState === WebSocket.CONNECTING) {
-        ws.onopen = () => ws.close();
-      } else {
-        ws.close();
+      // Deregister this WS so the onopen handler knows it is stale.
+      if (wsRef.current === ws) {
+        wsRef.current = null;
       }
+      // Close regardless of readyState — browsers buffer the close frame if the
+      // connection is still CONNECTING and send it once the handshake completes.
+      ws.close();
     };
   }, [roomID, playerID]);
+
+  const hasUnsavedChanged = true;
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    window.addEventListener(
+      "beforeunload",
+      (e) => {
+        if (!hasUnsavedChanged) return;
+
+        e.preventDefault();
+      },
+      { signal: controller.signal },
+    );
+
+    return () => controller.abort();
+  }, [hasUnsavedChanged]);
 
   // ---- Draw callback registration ----
 
