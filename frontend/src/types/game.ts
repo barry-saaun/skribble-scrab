@@ -26,6 +26,7 @@ export interface GameState {
   roundEndingCountdown: number | null;
   roundEndingGuesserID: string | null;
   winner: string | null;
+  roundLive: boolean;
 
   lastError: ErrorPayload | null;
 }

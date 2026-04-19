@@ -27,6 +27,7 @@ const initGameState: GameState = {
   roundEndingCountdown: null,
   roundEndingGuesserID: null,
   winner: null,
+  roundLive: false,
   lastError: null,
 };
 
@@ -53,6 +54,7 @@ function gameReducer(state: GameState, action: ServerMessage): GameState {
         wordLength: action.payload.wordLength,
         currentRound: action.payload.round,
         status: "in_progress",
+        roundLive: true,
         secondsRemaining: null,
         roundEndingCountdown: null,
         roundEndingGuesserID: null,
@@ -62,6 +64,7 @@ function gameReducer(state: GameState, action: ServerMessage): GameState {
     case "round.ending":
       return {
         ...state,
+        roundLive: false,
         roundEndingCountdown: action.payload.secondsRemaining,
         roundEndingGuesserID: action.payload.correctPlayerID,
       };
@@ -72,6 +75,7 @@ function gameReducer(state: GameState, action: ServerMessage): GameState {
     case "round.end":
       return {
         ...state,
+        roundLive: false,
         scores: action.payload.scores,
         secondsRemaining: null,
       };
@@ -85,6 +89,7 @@ function gameReducer(state: GameState, action: ServerMessage): GameState {
     case "game.end":
       return {
         ...state,
+        roundLive: false,
         scores: action.payload.scores,
         winner: action.payload.winner,
         status: "finished",

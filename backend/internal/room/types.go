@@ -67,4 +67,5 @@ type GameState struct {
 
 	Timer       context.CancelFunc
 	RoundEnding bool // true while the post-guess countdown is running
+	RoundLive   bool // true only while the round timer is actively ticking (false during intermission, lobby, game over)
 }

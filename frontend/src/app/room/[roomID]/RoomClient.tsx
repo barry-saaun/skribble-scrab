@@ -3,6 +3,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "~/components/ui/tooltip";
 import useGameSocket from "~/hooks/useGameSocket";
 import Canvas from "~/app/components/Canvas";
 import ChatBox from "~/app/components/ChatBox";
@@ -112,16 +118,34 @@ export default function RoomClient({
         className="px-4 py-2 flex items-center gap-4 shrink-0 bg-card"
         style={{ borderBottom: "2px solid var(--brut-ink)" }}
       >
-        <button
-          onClick={handleLeave}
-          className="font-mono font-bold uppercase tracking-widest text-[10px] py-1.5 px-3 bg-transparent shrink-0 transition-all"
-          style={{
-            border: "2px solid var(--brut-ink)",
-            color: "var(--brut-ink)",
-          }}
-        >
-          ← LEAVE
-        </button>
+        <TooltipProvider>
+          <Tooltip>
+            {/* span wrapper is required — disabled buttons swallow pointer events so the tooltip would never open */}
+            <TooltipTrigger asChild>
+              <span className="inline-flex shrink-0">
+                <button
+                  onClick={gameState.roundLive ? undefined : handleLeave}
+                  disabled={gameState.roundLive}
+                  className="font-mono font-bold uppercase tracking-widest text-[10px] py-1.5 px-3 bg-transparent transition-all"
+                  style={{
+                    border: "2px solid var(--brut-ink)",
+                    color: "var(--brut-ink)",
+                    opacity: gameState.roundLive ? 0.35 : 1,
+                    cursor: gameState.roundLive ? "not-allowed" : "pointer",
+                    pointerEvents: gameState.roundLive ? "none" : "auto",
+                  }}
+                >
+                  ← LEAVE
+                </button>
+              </span>
+            </TooltipTrigger>
+            {gameState.roundLive && (
+              <TooltipContent side="bottom">
+                Can&apos;t leave mid-round
+              </TooltipContent>
+            )}
+          </Tooltip>
+        </TooltipProvider>
 
         <div className="flex items-center gap-2 min-w-0 flex-1">
           <span className="font-mono text-xs text-muted-foreground  tracking-widest hidden sm:block">
@@ -192,9 +216,7 @@ export default function RoomClient({
             {isDrawer ? "YOUR WORD:" : "GUESS THE WORD:"}
           </span>
           <span className="font-mono font-bold text-xl tracking-[0.4em] text-foreground">
-            {isDrawer
-              ? drawerWord
-              : "_".repeat(gameState.wordLength ?? 7)}
+            {isDrawer ? drawerWord : "_".repeat(gameState.wordLength ?? 7)}
           </span>
         </div>
       )}

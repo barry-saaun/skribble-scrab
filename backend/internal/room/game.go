@@ -117,6 +117,8 @@ func (r *Room) startRoundTimer(ctx context.Context) {
 // broadcastRoundStart sends round.start to all clients, with the word only to the drawer,
 // then starts the round timer.
 func (r *Room) broadcastRoundStart() {
+	r.Game.RoundLive = true
+
 	r.mu.RLock()
 	clients := make(map[string]Sender, len(r.Clients))
 	maps.Copy(clients, r.Clients)
@@ -152,6 +154,7 @@ func (r *Room) advanceDrawer(word string, scores map[string]int) {
 		r.Game.Timer()
 	}
 	r.Game.RoundEnding = false
+	r.Game.RoundLive = false
 	nextIndex := r.Game.DrawerIndex + 1
 	rotationComplete := nextIndex >= len(r.Game.DrawOrder)
 
@@ -317,6 +320,7 @@ func (r *Room) handlePlayerGuess(event Event) {
 		r.Game.Timer()
 	}
 	r.Game.RoundEnding = true
+	r.Game.RoundLive = false
 	capturedRound := r.Game.CurrentRound
 	guesserID := event.PlayerID
 
@@ -387,6 +391,7 @@ func (r *Room) handlePlayerLeaveInGame(playerID string) {
 }
 
 func (r *Room) endGameEarly() {
+	r.Game.RoundLive = false
 	r.Status = StatusFinished
 	winner := r.findWinner()
 	r.BroadcastEvent(EventGameEnd, gameEndPayload{
