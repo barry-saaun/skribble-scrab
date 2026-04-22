@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import {
   Tooltip,
@@ -14,7 +14,6 @@ import ChatBox from "~/app/components/ChatBox";
 import GameEndModal from "~/app/components/GameEndModal";
 import GuessBox from "~/app/components/GuessBox";
 import RoundEndingOverlay from "~/app/components/RoundEndingOverlay";
-import type { CanvasHandle, DrawStrokePayload } from "~/types/events";
 import {
   ErrorCode,
   errorMessages,
@@ -24,6 +23,7 @@ import {
   isToastErrorCode,
 } from "~/types/errors";
 import usePlayerPresence from "~/hooks/usePlayerPresence";
+import useCanvasSync from "~/hooks/useCanvasSync";
 
 export default function RoomClient({
   roomID,
@@ -61,8 +61,13 @@ export default function RoomClient({
     sendLeave,
   });
 
+  const { canvasRef, handleClear, handleStroke } = useCanvasSync({
+    sendClear,
+    sendStroke,
+    registerDrawCallbacks,
+  });
+
   const [gameEndDismissed, setGameEndDismissed] = useState(false);
-  const canvasRef = useRef<CanvasHandle>(null);
 
   const lastError = gameState.lastError;
 
@@ -77,23 +82,6 @@ export default function RoomClient({
       description: toastErrorMessages[lastError.code],
     });
   }, [lastError]);
-
-  useEffect(() => {
-    registerDrawCallbacks(
-      (payload) => canvasRef.current?.applyStroke(payload),
-      () => canvasRef.current?.clearCanvas(),
-    );
-  }, [registerDrawCallbacks]);
-
-  const handleStroke = useCallback(
-    (payload: DrawStrokePayload) => sendStroke(payload),
-    [sendStroke],
-  );
-
-  const handleClear = useCallback(() => {
-    canvasRef.current?.clearCanvas();
-    sendClear();
-  }, [sendClear]);
 
   const isHost =
     playerID === gameState.players.find((p) => p.role === "host")?.id;

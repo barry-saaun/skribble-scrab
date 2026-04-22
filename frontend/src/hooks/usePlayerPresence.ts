@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { GameState } from "~/types/game";
 
-interface TUserPlayerPresence {
+interface TUsePlayerPresence {
   gameState: GameState;
   playerID: string;
   sendLeave: () => void;
@@ -14,7 +14,7 @@ export default function usePlayerPresence({
   gameState,
   playerID,
   sendLeave,
-}: TUserPlayerPresence) {
+}: TUsePlayerPresence) {
   const [confirmLeave, setConfirmLeave] = useState(false);
 
   const router = useRouter();
