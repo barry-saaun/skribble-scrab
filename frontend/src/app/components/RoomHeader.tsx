@@ -1,0 +1,174 @@
+"use client";
+
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "~/components/ui/tooltip";
+import { ErrorCode, errorMessages } from "~/types/errors";
+import type { GameState } from "~/types/game";
+
+interface Props {
+  roomID: string;
+  isDrawer: boolean;
+  gameState: GameState;
+  // from usePlayerPresence
+  showConfirmLeave: boolean;
+  isNextDrawer: boolean;
+  isIntermission: boolean;
+  handleLeave: () => void;
+  setConfirmLeave: (v: boolean) => void;
+}
+
+export default function RoomHeader({
+  roomID,
+  isDrawer,
+  gameState,
+  showConfirmLeave,
+  isNextDrawer,
+  isIntermission,
+  handleLeave,
+  setConfirmLeave,
+}: Props) {
+  const secondsLeft = gameState.secondsRemaining ?? 0;
+  const timerPct = Math.min((secondsLeft / 60) * 100, 100);
+  const timerColor =
+    secondsLeft > 20
+      ? "var(--primary)"
+      : secondsLeft > 10
+        ? "#C07A1A"
+        : "#C0311A";
+
+  return (
+    <header
+      className="px-4 py-2 flex items-center gap-4 shrink-0 bg-card"
+      style={{ borderBottom: "2px solid var(--brut-ink)" }}
+    >
+      {showConfirmLeave ? (
+        <div className="inline-flex shrink-0 items-center gap-2">
+          {isNextDrawer && (
+            <span
+              className="font-mono text-[10px] uppercase tracking-widest shrink-0"
+              style={{ color: "var(--muted-foreground)" }}
+            >
+              You&apos;re up next
+            </span>
+          )}
+          <button
+            onClick={() => setConfirmLeave(false)}
+            className="font-mono font-bold uppercase tracking-widest text-[10px] py-1.5 px-3 bg-transparent"
+            style={{
+              border: "2px solid var(--brut-ink)",
+              color: "var(--brut-ink)",
+            }}
+          >
+            Stay
+          </button>
+          <button
+            onClick={handleLeave}
+            className="font-mono font-bold uppercase tracking-widest text-[10px] py-1.5 px-3"
+            style={{
+              border: "2px solid var(--primary)",
+              background: "var(--primary)",
+              color: "oklch(0.975 0.01 80)",
+            }}
+          >
+            Leave
+          </button>
+        </div>
+      ) : (
+        <TooltipProvider>
+          <Tooltip>
+            {/* span wrapper required — disabled buttons swallow pointer events */}
+            <TooltipTrigger asChild>
+              <span className="inline-flex shrink-0">
+                <button
+                  onClick={
+                    gameState.roundLive
+                      ? undefined
+                      : () => setConfirmLeave(true)
+                  }
+                  disabled={gameState.roundLive}
+                  className="font-mono font-bold uppercase tracking-widest text-[10px] py-1.5 px-3 bg-transparent transition-all"
+                  style={{
+                    border: `2px solid ${isIntermission ? "#ca8a04" : "var(--brut-ink)"}`,
+                    color: isIntermission ? "#ca8a04" : "var(--brut-ink)",
+                    opacity: gameState.roundLive ? 0.35 : 1,
+                    cursor: gameState.roundLive ? "not-allowed" : "pointer",
+                    pointerEvents: gameState.roundLive ? "none" : "auto",
+                    boxShadow: isIntermission ? "var(--brut-shadow-sm)" : "none",
+                  }}
+                >
+                  ← LEAVE
+                </button>
+              </span>
+            </TooltipTrigger>
+            {gameState.roundLive && (
+              <TooltipContent side="bottom">
+                {errorMessages[ErrorCode.CANNOT_LEAVE_MID_ROUND]}
+              </TooltipContent>
+            )}
+          </Tooltip>
+        </TooltipProvider>
+      )}
+
+      <div className="flex items-center gap-2 min-w-0 flex-1">
+        <span className="font-mono text-xs text-muted-foreground tracking-widest hidden sm:block">
+          {roomID}
+        </span>
+        {gameState.status === "in_progress" && (
+          <>
+            <span
+              className="font-mono text-[10px] px-2 py-0.5 uppercase tracking-wider font-bold shrink-0"
+              style={{
+                border: "1.5px solid var(--brut-ink)",
+                color: "var(--brut-ink)",
+              }}
+            >
+              ROUND {gameState.currentRound}/{gameState.totalRotations}
+            </span>
+            {isDrawer && (
+              <span
+                className="font-mono text-[10px] px-2 py-0.5 uppercase tracking-wider font-bold shrink-0"
+                style={{
+                  border: "1.5px solid var(--primary)",
+                  color: "var(--primary)",
+                }}
+              >
+                YOU ARE DRAWING
+              </span>
+            )}
+          </>
+        )}
+      </div>
+
+      {gameState.status === "in_progress" && (
+        <div className="flex items-center gap-3 shrink-0">
+          <div className="hidden sm:flex items-center gap-2">
+            <div
+              className="w-28 h-2 overflow-hidden"
+              style={{
+                border: "1.5px solid var(--border)",
+                background: "var(--secondary)",
+              }}
+            >
+              <div
+                className="h-full transition-all duration-1000"
+                style={{ width: `${timerPct}%`, background: timerColor }}
+              />
+            </div>
+          </div>
+          <div
+            className="font-mono font-black text-2xl tabular-nums"
+            style={{
+              color: secondsLeft <= 10 ? "#C0311A" : "var(--foreground)",
+            }}
+          >
+            {String(secondsLeft).padStart(2, "0")}
+          </div>
+        </div>
+      )}
+    </header>
+  );
+}
