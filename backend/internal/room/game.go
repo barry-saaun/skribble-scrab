@@ -97,6 +97,7 @@ func (r *Room) handleGameStart(event Event) {
 
 	rand.Shuffle(len(playerIDs), func(i, j int) { playerIDs[i], playerIDs[j] = playerIDs[j], playerIDs[i] })
 
+	r.mu.Lock()
 	r.Status = StatusInProgress
 	r.Game = GameState{
 		CurrentRound:    1,
@@ -111,6 +112,7 @@ func (r *Room) handleGameStart(event Event) {
 		LastGuessAt:     make(map[string]time.Time),
 		GuessCount:      make(map[string]int),
 	}
+	r.mu.Unlock()
 
 	r.BroadcastEvent(EventRotationStart, rotationStartPayload{
 		RotationNumber: r.Game.CurrentRotation,
