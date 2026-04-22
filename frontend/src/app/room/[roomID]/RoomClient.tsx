@@ -1,8 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { toast } from "sonner";
+import { useState } from "react";
 import useGameSocket from "~/hooks/useGameSocket";
+import useErrorNotifications from "~/hooks/useErrorNotifications";
 import usePlayerPresence from "~/hooks/usePlayerPresence";
 import Canvas from "~/app/components/Canvas";
 import ChatBox from "~/app/components/ChatBox";
@@ -12,13 +12,7 @@ import PlayersSidebar from "~/app/components/PlayersSidebar";
 import RoomFooter from "~/app/components/RoomFooter";
 import RoomHeader from "~/app/components/RoomHeader";
 import RoundEndingOverlay from "~/app/components/RoundEndingOverlay";
-import type { CanvasHandle, DrawStrokePayload } from "~/types/events";
-import {
-  toastErrorMessages,
-  toastErrorTitles,
-  isInlineErrorCode,
-  isToastErrorCode,
-} from "~/types/errors";
+import useCanvasSync from "~/hooks/useCanvasSync";
 
 export default function RoomClient({
   roomID,
@@ -52,39 +46,15 @@ export default function RoomClient({
     isIntermission,
   } = usePlayerPresence({ gameState, playerID, sendLeave });
 
+  const { canvasRef, handleStroke, handleClear } = useCanvasSync({
+    registerDrawCallbacks,
+    sendClear,
+    sendStroke,
+  });
+
   const [gameEndDismissed, setGameEndDismissed] = useState(false);
-  const canvasRef = useRef<CanvasHandle>(null);
 
-  const lastError = gameState.lastError;
-
-  const inlineError = useMemo(() => {
-    if (!lastError || !isInlineErrorCode(lastError.code)) return undefined;
-    return { code: lastError.code };
-  }, [lastError]);
-
-  useEffect(() => {
-    if (!lastError || !isToastErrorCode(lastError.code)) return;
-    toast.error(toastErrorTitles[lastError.code], {
-      description: toastErrorMessages[lastError.code],
-    });
-  }, [lastError]);
-
-  useEffect(() => {
-    registerDrawCallbacks(
-      (payload) => canvasRef.current?.applyStroke(payload),
-      () => canvasRef.current?.clearCanvas(),
-    );
-  }, [registerDrawCallbacks]);
-
-  const handleStroke = useCallback(
-    (payload: DrawStrokePayload) => sendStroke(payload),
-    [sendStroke],
-  );
-
-  const handleClear = useCallback(() => {
-    canvasRef.current?.clearCanvas();
-    sendClear();
-  }, [sendClear]);
+  const { inlineError } = useErrorNotifications(gameState.lastError);
 
   const isHost =
     playerID === gameState.players.find((p) => p.role === "host")?.id;
