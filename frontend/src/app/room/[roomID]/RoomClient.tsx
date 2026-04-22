@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {
   Tooltip,
@@ -24,6 +23,7 @@ import {
   isInlineErrorCode,
   isToastErrorCode,
 } from "~/types/errors";
+import usePlayerPresence from "~/hooks/usePlayerPresence";
 
 export default function RoomClient({
   roomID,
@@ -34,7 +34,6 @@ export default function RoomClient({
   playerID: string;
   username: string;
 }) {
-  const router = useRouter();
   const {
     gameState,
     drawerWord,
@@ -50,42 +49,20 @@ export default function RoomClient({
     registerDrawCallbacks,
   } = useGameSocket({ roomID, playerID });
 
+  const {
+    handleLeave,
+    setConfirmLeave,
+    isNextDrawer,
+    showConfirmLeave,
+    isIntermission,
+  } = usePlayerPresence({
+    gameState,
+    playerID,
+    sendLeave,
+  });
+
   const [gameEndDismissed, setGameEndDismissed] = useState(false);
-  const [confirmLeave, setConfirmLeave] = useState(false);
   const canvasRef = useRef<CanvasHandle>(null);
-
-  // Derive whether this player draws next. Only meaningful during intermission
-  // (roundLive = false, game in progress).
-  // Skips rotation boundaries intentionally:
-  // crossing into a new rotation feels like a natural break point.
-  const drawerIndex = gameState.drawOrder.findIndex(
-    (id) => id === gameState.drawerID,
-  );
-  const nextIndex = drawerIndex + 1;
-  const isNextDrawer =
-    gameState.status === "in_progress" &&
-    !gameState.roundLive &&
-    nextIndex < gameState.drawOrder.length &&
-    gameState.drawOrder[nextIndex] === playerID;
-
-  // True only during the post-guess countdown, this is the window where leaving is allowed
-  // and we want to draw the player's eye to the Leave button.
-  const isIntermission =
-    gameState.status === "in_progress" &&
-    !gameState.roundLive &&
-    gameState.roundEndingCountdown !== null;
-
-  const showConfirmLeave =
-    confirmLeave &&
-    gameState.status === "in_progress" &&
-    !gameState.roundLive &&
-    gameState.roundEndingCountdown !== null &&
-    isNextDrawer;
-
-  const handleLeave = useCallback(() => {
-    sendLeave();
-    router.push("/");
-  }, [sendLeave, router]);
 
   const lastError = gameState.lastError;
 
@@ -150,14 +127,15 @@ export default function RoomClient({
         style={{ borderBottom: "2px solid var(--brut-ink)" }}
       >
         {showConfirmLeave ? (
-          // Inline confirm — only shown during intermission when this player draws next
           <div className="inline-flex shrink-0 items-center gap-2">
-            <span
-              className="font-mono text-[10px] uppercase tracking-widest shrink-0"
-              style={{ color: "var(--muted-foreground)" }}
-            >
-              You&apos;re up next
-            </span>
+            {isNextDrawer && (
+              <span
+                className="font-mono text-[10px] uppercase tracking-widest shrink-0"
+                style={{ color: "var(--muted-foreground)" }}
+              >
+                You&apos;re up next
+              </span>
+            )}
             <button
               onClick={() => setConfirmLeave(false)}
               className="font-mono font-bold uppercase tracking-widest text-[10px] py-1.5 px-3 bg-transparent"
@@ -190,9 +168,7 @@ export default function RoomClient({
                     onClick={
                       gameState.roundLive
                         ? undefined
-                        : isNextDrawer
-                          ? () => setConfirmLeave(true)
-                          : handleLeave
+                        : () => setConfirmLeave(true)
                     }
                     disabled={gameState.roundLive}
                     className="font-mono font-bold uppercase tracking-widest text-[10px] py-1.5 px-3 bg-transparent transition-all"

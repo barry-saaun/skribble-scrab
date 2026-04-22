@@ -234,24 +234,6 @@ export default function useGameSocket({
     };
   }, [roomID, playerID]);
 
-  const isRoundLive = gameState.roundLive;
-
-  useEffect(() => {
-    const controller = new AbortController();
-
-    window.addEventListener(
-      "beforeunload",
-      (e) => {
-        if (!isRoundLive) return;
-
-        e.preventDefault();
-      },
-      { signal: controller.signal },
-    );
-
-    return () => controller.abort();
-  }, [isRoundLive]);
-
   // ---- Draw callback registration ----
 
   const registerDrawCallbacks = (
