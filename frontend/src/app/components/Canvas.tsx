@@ -279,7 +279,7 @@ const Canvas = forwardRef<CanvasHandle, CanvasProps>(function Canvas(
               <button
                 key={t}
                 onClick={() => setTool(t)}
-                className="font-mono text-[10px] uppercase tracking-widest px-3 py-1.5 transition-colors"
+                className="brut-press font-mono text-[10px] uppercase tracking-widest px-3 py-1.5"
                 style={{
                   border: "1.5px solid var(--brut-ink)",
                   background: tool === t ? "var(--brut-ink)" : "transparent",
@@ -342,7 +342,7 @@ const Canvas = forwardRef<CanvasHandle, CanvasProps>(function Canvas(
           <div className="ml-auto">
             <button
               onClick={handleClearCanvas}
-              className="font-mono font-bold uppercase tracking-widest text-[10px] px-3 py-1.5 bg-transparent transition-all"
+              className="brut-press font-mono font-bold uppercase tracking-widest text-[10px] px-3 py-1.5 bg-transparent"
               style={{ border: "2px solid var(--brut-ink)", color: "var(--brut-ink)" }}
             >
               CLEAR

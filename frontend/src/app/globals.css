@@ -205,6 +205,35 @@
     box-shadow: 4px 4px 0px var(--brut-ink);
     transform: translate(-2px, -2px);
   }
+  /* Confirm-leave row entrance */
+  @keyframes brut-confirm-in {
+    from {
+      opacity: 0;
+      transform: translateX(-6px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+  .confirm-leave-enter {
+    animation: brut-confirm-in 0.12s ease-out both;
+  }
+  /* Stamp press — any clickable brutalist button */
+  .brut-press {
+    transition:
+      box-shadow 0.08s ease-out,
+      transform 0.08s ease-out,
+      background 0.1s,
+      color 0.1s,
+      opacity 0.1s,
+      border-color 0.1s;
+    box-shadow: var(--brut-shadow-sm);
+  }
+  .brut-press:not(:disabled):hover {
+    transform: translate(2px, 2px);
+    box-shadow: none;
+  }
   /* Input field — parchment fill, ink focus border */
   .brut-input {
     @apply font-mono text-sm w-full px-3 py-2 bg-secondary text-foreground;

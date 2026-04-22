@@ -134,7 +134,7 @@ export default function PlayersSidebar({
       {status === "waiting" && isHost && (
         <button
           onClick={onStartGame}
-          className="m-3 font-mono font-bold uppercase tracking-widest text-xs py-2 px-3 shrink-0 transition-all"
+          className="brut-press m-3 font-mono font-bold uppercase tracking-widest text-xs py-2 px-3 shrink-0"
           style={{
             border: "2px solid var(--primary)",
             background: "var(--primary)",

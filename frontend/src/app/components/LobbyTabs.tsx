@@ -65,7 +65,7 @@ function BrowseRoomsTab({
         <p className="text-xs uppercase tracking-widest text-muted-foreground">
           {"//"} {PLACEHOLDER_ROOMS.length} ACTIVE ROOMS
         </p>
-        <button className="cursor-pointer border-2 border-foreground px-3 py-1 text-xs font-bold uppercase transition-colors hover:bg-foreground hover:text-background">
+        <button className="brut-press cursor-pointer border-2 border-foreground px-3 py-1 text-xs font-bold uppercase hover:bg-foreground hover:text-background">
           REFRESH
         </button>
       </div>
@@ -106,7 +106,7 @@ function BrowseRoomsTab({
             </div>
             <button
               disabled={isDisabled}
-              className={`ml-4 shrink-0 border-2 px-4 py-2 text-xs font-bold uppercase transition-all ${
+              className={`brut-press ml-4 shrink-0 border-2 px-4 py-2 text-xs font-bold uppercase ${
                 isDisabled
                   ? "cursor-not-allowed border-muted bg-muted text-muted-foreground opacity-50"
                   : "cursor-pointer border-accent bg-accent text-accent-foreground hover:opacity-90"
@@ -127,7 +127,7 @@ function BrowseRoomsTab({
         </div>
         <button
           disabled={isDisabled}
-          className={`ml-4 shrink-0 border-2 px-4 py-2 text-xs font-bold uppercase transition-all ${
+          className={`brut-press ml-4 shrink-0 border-2 px-4 py-2 text-xs font-bold uppercase ${
             isDisabled
               ? "cursor-not-allowed border-muted bg-muted text-muted-foreground opacity-50"
               : "cursor-pointer border-accent bg-accent text-accent-foreground hover:opacity-90"
@@ -196,7 +196,7 @@ function CreateRoomTab({ defaultDisplayName }: { defaultDisplayName: string }) {
         <button
           type="submit"
           disabled={isDisabled}
-          className={`w-full border-2 px-4 py-3 text-sm font-bold uppercase transition-all ${
+          className={`brut-press w-full border-2 px-4 py-3 text-sm font-bold uppercase ${
             isDisabled
               ? "cursor-not-allowed border-muted bg-muted text-muted-foreground opacity-50"
               : "cursor-pointer border-foreground bg-foreground text-background hover:border-accent hover:bg-accent hover:text-accent-foreground"
@@ -260,7 +260,7 @@ function JoinByCodeTab({
         <button
           type="submit"
           disabled={isDisabled}
-          className={`w-full border-2 px-4 py-3 text-sm font-bold uppercase transition-all ${
+          className={`brut-press w-full border-2 px-4 py-3 text-sm font-bold uppercase ${
             isDisabled
               ? "cursor-not-allowed border-muted bg-muted text-muted-foreground opacity-50"
               : "cursor-pointer border-foreground bg-accent text-accent-foreground hover:opacity-90"

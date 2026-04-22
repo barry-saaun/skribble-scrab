@@ -46,7 +46,7 @@ export default function RoomHeader({
       style={{ borderBottom: "2px solid var(--brut-ink)" }}
     >
       {showConfirmLeave ? (
-        <div className="inline-flex shrink-0 items-center gap-2">
+        <div className="confirm-leave-enter inline-flex shrink-0 items-center gap-2">
           {isNextDrawer && (
             <span
               className="font-mono text-[10px] uppercase tracking-widest shrink-0"
@@ -57,7 +57,7 @@ export default function RoomHeader({
           )}
           <button
             onClick={() => setConfirmLeave(false)}
-            className="font-mono font-bold uppercase tracking-widest text-[10px] py-1.5 px-3 bg-transparent"
+            className="brut-press font-mono font-bold uppercase tracking-widest text-[10px] py-1.5 px-3 bg-transparent"
             style={{
               border: "2px solid var(--brut-ink)",
               color: "var(--brut-ink)",
@@ -67,7 +67,7 @@ export default function RoomHeader({
           </button>
           <button
             onClick={handleLeave}
-            className="font-mono font-bold uppercase tracking-widest text-[10px] py-1.5 px-3"
+            className="brut-press font-mono font-bold uppercase tracking-widest text-[10px] py-1.5 px-3"
             style={{
               border: "2px solid var(--primary)",
               background: "var(--primary)",
@@ -90,7 +90,7 @@ export default function RoomHeader({
                       : () => setConfirmLeave(true)
                   }
                   disabled={gameState.roundLive}
-                  className="font-mono font-bold uppercase tracking-widest text-[10px] py-1.5 px-3 bg-transparent transition-all"
+                  className="brut-press font-mono font-bold uppercase tracking-widest text-[10px] py-1.5 px-3 bg-transparent"
                   style={{
                     border: `2px solid ${isIntermission ? "#ca8a04" : "var(--brut-ink)"}`,
                     color: isIntermission ? "#ca8a04" : "var(--brut-ink)",
