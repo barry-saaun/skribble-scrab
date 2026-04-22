@@ -52,9 +52,10 @@ const (
 
 // Error codes for room access / join error
 const (
-	ErrRoomNotValid  = "ROOM_NOT_FOUND"
-	ErrRoomFull      = "ROOM_FULL"
-	ErrPrivateNoCode = "PRIVATE_NO_CODE"
+	ErrRoomNotFound        = "ROOM_NOT_FOUND"
+	ErrRoomFull            = "ROOM_FULL"
+	ErrPrivateNoCode       = "PRIVATE_NO_CODE"
+	ErrCannotLeaveMidRound = "CANNOT_LEAVE_MID_ROUND"
 )
 
 // General room state error codes (might not needed now but for later)

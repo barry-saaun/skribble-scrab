@@ -34,6 +34,9 @@ export default function RoundEndingOverlay({
         <p className="font-mono text-xs uppercase tracking-widest text-neutral-500">
           next round starting
         </p>
+        <p className="font-mono text-[9px] uppercase tracking-[0.2em] text-neutral-600 -mt-1">
+          ↑ or leave now
+        </p>
       </div>
     </div>
   );

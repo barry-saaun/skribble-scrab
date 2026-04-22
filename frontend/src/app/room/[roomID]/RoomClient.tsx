@@ -17,6 +17,8 @@ import GuessBox from "~/app/components/GuessBox";
 import RoundEndingOverlay from "~/app/components/RoundEndingOverlay";
 import type { CanvasHandle, DrawStrokePayload } from "~/types/events";
 import {
+  ErrorCode,
+  errorMessages,
   toastErrorMessages,
   toastErrorTitles,
   isInlineErrorCode,
@@ -49,7 +51,36 @@ export default function RoomClient({
   } = useGameSocket({ roomID, playerID });
 
   const [gameEndDismissed, setGameEndDismissed] = useState(false);
+  const [confirmLeave, setConfirmLeave] = useState(false);
   const canvasRef = useRef<CanvasHandle>(null);
+
+  // Derive whether this player draws next. Only meaningful during intermission
+  // (roundLive = false, game in progress).
+  // Skips rotation boundaries intentionally:
+  // crossing into a new rotation feels like a natural break point.
+  const drawerIndex = gameState.drawOrder.findIndex(
+    (id) => id === gameState.drawerID,
+  );
+  const nextIndex = drawerIndex + 1;
+  const isNextDrawer =
+    gameState.status === "in_progress" &&
+    !gameState.roundLive &&
+    nextIndex < gameState.drawOrder.length &&
+    gameState.drawOrder[nextIndex] === playerID;
+
+  // True only during the post-guess countdown, this is the window where leaving is allowed
+  // and we want to draw the player's eye to the Leave button.
+  const isIntermission =
+    gameState.status === "in_progress" &&
+    !gameState.roundLive &&
+    gameState.roundEndingCountdown !== null;
+
+  const showConfirmLeave =
+    confirmLeave &&
+    gameState.status === "in_progress" &&
+    !gameState.roundLive &&
+    gameState.roundEndingCountdown !== null &&
+    isNextDrawer;
 
   const handleLeave = useCallback(() => {
     sendLeave();
@@ -118,34 +149,76 @@ export default function RoomClient({
         className="px-4 py-2 flex items-center gap-4 shrink-0 bg-card"
         style={{ borderBottom: "2px solid var(--brut-ink)" }}
       >
-        <TooltipProvider>
-          <Tooltip>
-            {/* span wrapper is required — disabled buttons swallow pointer events so the tooltip would never open */}
-            <TooltipTrigger asChild>
-              <span className="inline-flex shrink-0">
-                <button
-                  onClick={gameState.roundLive ? undefined : handleLeave}
-                  disabled={gameState.roundLive}
-                  className="font-mono font-bold uppercase tracking-widest text-[10px] py-1.5 px-3 bg-transparent transition-all"
-                  style={{
-                    border: "2px solid var(--brut-ink)",
-                    color: "var(--brut-ink)",
-                    opacity: gameState.roundLive ? 0.35 : 1,
-                    cursor: gameState.roundLive ? "not-allowed" : "pointer",
-                    pointerEvents: gameState.roundLive ? "none" : "auto",
-                  }}
-                >
-                  ← LEAVE
-                </button>
-              </span>
-            </TooltipTrigger>
-            {gameState.roundLive && (
-              <TooltipContent side="bottom">
-                Can&apos;t leave mid-round
-              </TooltipContent>
-            )}
-          </Tooltip>
-        </TooltipProvider>
+        {showConfirmLeave ? (
+          // Inline confirm — only shown during intermission when this player draws next
+          <div className="inline-flex shrink-0 items-center gap-2">
+            <span
+              className="font-mono text-[10px] uppercase tracking-widest shrink-0"
+              style={{ color: "var(--muted-foreground)" }}
+            >
+              You&apos;re up next
+            </span>
+            <button
+              onClick={() => setConfirmLeave(false)}
+              className="font-mono font-bold uppercase tracking-widest text-[10px] py-1.5 px-3 bg-transparent"
+              style={{
+                border: "2px solid var(--brut-ink)",
+                color: "var(--brut-ink)",
+              }}
+            >
+              Stay
+            </button>
+            <button
+              onClick={handleLeave}
+              className="font-mono font-bold uppercase tracking-widest text-[10px] py-1.5 px-3"
+              style={{
+                border: "2px solid var(--primary)",
+                background: "var(--primary)",
+                color: "oklch(0.975 0.01 80)",
+              }}
+            >
+              Leave
+            </button>
+          </div>
+        ) : (
+          <TooltipProvider>
+            <Tooltip>
+              {/* span wrapper is required — disabled buttons swallow pointer events so the tooltip would never open */}
+              <TooltipTrigger asChild>
+                <span className="inline-flex shrink-0">
+                  <button
+                    onClick={
+                      gameState.roundLive
+                        ? undefined
+                        : isNextDrawer
+                          ? () => setConfirmLeave(true)
+                          : handleLeave
+                    }
+                    disabled={gameState.roundLive}
+                    className="font-mono font-bold uppercase tracking-widest text-[10px] py-1.5 px-3 bg-transparent transition-all"
+                    style={{
+                      border: `2px solid ${isIntermission ? "#ca8a04" : "var(--brut-ink)"}`,
+                      color: isIntermission ? "#ca8a04" : "var(--brut-ink)",
+                      opacity: gameState.roundLive ? 0.35 : 1,
+                      cursor: gameState.roundLive ? "not-allowed" : "pointer",
+                      pointerEvents: gameState.roundLive ? "none" : "auto",
+                      boxShadow: isIntermission
+                        ? "var(--brut-shadow-sm)"
+                        : "none",
+                    }}
+                  >
+                    ← LEAVE
+                  </button>
+                </span>
+              </TooltipTrigger>
+              {gameState.roundLive && (
+                <TooltipContent side="bottom">
+                  {errorMessages[ErrorCode.CANNOT_LEAVE_MID_ROUND]}
+                </TooltipContent>
+              )}
+            </Tooltip>
+          </TooltipProvider>
+        )}
 
         <div className="flex items-center gap-2 min-w-0 flex-1">
           <span className="font-mono text-xs text-muted-foreground  tracking-widest hidden sm:block">

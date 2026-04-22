@@ -234,7 +234,7 @@ export default function useGameSocket({
     };
   }, [roomID, playerID]);
 
-  const hasUnsavedChanged = true;
+  const isRoundLive = gameState.roundLive;
 
   useEffect(() => {
     const controller = new AbortController();
@@ -242,7 +242,7 @@ export default function useGameSocket({
     window.addEventListener(
       "beforeunload",
       (e) => {
-        if (!hasUnsavedChanged) return;
+        if (!isRoundLive) return;
 
         e.preventDefault();
       },
@@ -250,7 +250,7 @@ export default function useGameSocket({
     );
 
     return () => controller.abort();
-  }, [hasUnsavedChanged]);
+  }, [isRoundLive]);
 
   // ---- Draw callback registration ----
 

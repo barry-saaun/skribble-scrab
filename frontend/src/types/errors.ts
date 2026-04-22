@@ -11,6 +11,7 @@ export const ErrorCode = {
   ROOM_NOT_FOUND: "ROOM_NOT_FOUND",
   ROOM_FULL: "ROOM_FULL",
   PRIVATE_NO_CODE: "PRIVATE_NO_CODE",
+  CANNOT_LEAVE_MID_ROUND: "CANNOT_LEAVE_MID_ROUND",
 
   // General room state errors
   PLAYER_ALREADY_IN_ROOM: "PLAYER_ALREADY_IN_ROOM",
@@ -35,6 +36,7 @@ export const errorMessages: Partial<Record<ErrorCode, string>> = {
   [ErrorCode.ROOM_NOT_FOUND]: "Room not found. Check the code and try again.",
   [ErrorCode.ROOM_FULL]: "The maximum players of this room has been reached.",
   [ErrorCode.PRIVATE_NO_CODE]: "This room is private.",
+  [ErrorCode.CANNOT_LEAVE_MID_ROUND]: "Cannot leave the room mid round..",
 
   // General room state errors
   [ErrorCode.PLAYER_ALREADY_IN_ROOM]: "You are already in this room.",

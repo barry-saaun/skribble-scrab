@@ -4,7 +4,6 @@ package room
 import (
 	"encoding/json"
 	"log"
-	"time"
 )
 
 // Sender is implemented by ws.Client — defined here to avoid an import cycle.
@@ -179,30 +178,16 @@ func (r *Room) Run() {
 	for event := range r.Events {
 		switch event.Type {
 		case EventPlayerLeave:
+			if r.Game.RoundLive {
+				r.sendError(event.PlayerID, ErrCannotLeaveMidRound)
+				return
+			}
+
 			if _, ok := r.GetPlayer(event.PlayerID); ok {
 				r.RemovePlayer(event.PlayerID)
 			}
-
 		case EventPlayerDisconnect:
-			// Give the player a short window to reconnect (handles React StrictMode
-			// double-mount, brief network hiccups, etc.). If they haven't reconnected
-			// after the grace period, remove them.
-			playerID := event.PlayerID
-			log.Printf("[room] EventPlayerDisconnect — player %s disconnected, starting 5s grace period", playerID)
-			go func() {
-				time.Sleep(5 * time.Second)
-				r.mu.RLock()
-				_, reconnected := r.Clients[playerID]
-				r.mu.RUnlock()
-				if reconnected {
-					log.Printf("[room] grace period elapsed — player %s reconnected, skipping removal", playerID)
-					return
-				}
-				log.Printf("[room] grace period elapsed — player %s did not reconnect, removing", playerID)
-				if _, ok := r.GetPlayer(playerID); ok {
-					r.RemovePlayer(playerID)
-				}
-			}()
+			r.handlePlayerDisconnect(event)
 		case EventGameStart:
 			r.handleGameStart(event)
 		case EventChatMessage:
