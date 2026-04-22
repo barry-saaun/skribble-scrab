@@ -90,7 +90,7 @@ export default function GuessBox({
             />
             <button
               onClick={handleGuess}
-              className="font-mono font-bold uppercase tracking-widest text-xs py-2 px-3 transition-all shrink-0"
+              className="brut-press font-mono font-bold uppercase tracking-widest text-xs py-2 px-3 shrink-0"
               style={{
                 border: "2px solid var(--brut-ink)",
                 background: "var(--brut-ink)",
