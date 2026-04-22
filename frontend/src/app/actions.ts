@@ -56,6 +56,10 @@ export async function joinRoomAction(
     redirect(`/error?code=ROOM_NOT_FOUND&room=${encodeURIComponent(roomCode)}`);
   }
 
+  if (joinError?.code === ErrorCode.GAME_ALREADY_ACTIVE) {
+    return { error: ErrorCode.GAME_ALREADY_ACTIVE };
+  }
+
   if (joinError?.code === ErrorCode.ROOM_FULL) {
     return { error: ErrorCode.ROOM_FULL };
   }

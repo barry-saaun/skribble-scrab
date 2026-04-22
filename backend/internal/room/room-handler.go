@@ -72,26 +72,29 @@ func (h *RoomHandler) HandleJoinRoom(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if !usernameRegex.MatchString(req.PlayerUsername) {
-		writeErrorCode(w, http.StatusBadRequest, "USERNAME_INVALID")
+		writeErrorCode(w, http.StatusBadRequest, ErrUsernameInvalid)
 		return
 	}
 
 	room, ok := h.manager.GetRoom(roomID)
 
 	if !ok {
-		writeErrorCode(w, http.StatusNotFound, "ROOM_NOT_FOUND")
+		writeErrorCode(w, http.StatusNotFound, ErrRoomNotFound)
 		return
 	}
 
 	if _, ok := room.GetPlayer(req.PlayerID); ok {
-		writeErrorCode(w, http.StatusConflict, "PLAYER_ALREADY_IN_ROOM")
+		writeErrorCode(w, http.StatusConflict, ErrPlayerAlreadyInRoom)
 		return
 	}
 
-	isFull := room.IsFull()
+	if room.isInProgress() {
+		writeErrorCode(w, http.StatusConflict, ErrGameAlreadyActive)
+		return
+	}
 
-	if isFull {
-		writeErrorCode(w, http.StatusConflict, "ROOM_FULL")
+	if room.IsFull() {
+		writeErrorCode(w, http.StatusConflict, ErrRoomFull)
 		return
 	}
 

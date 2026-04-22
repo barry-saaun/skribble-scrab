@@ -224,6 +224,12 @@ function JoinByCodeTab({
     !USERNAME_REGEX.test(defaultDisplayName) || codeInput.some((char) => !char);
 
   useEffect(() => {
+    if (state?.error === ErrorCode.GAME_ALREADY_ACTIVE) {
+      toast.error(toastErrorTitles[ErrorCode.GAME_ALREADY_ACTIVE], {
+        description: toastErrorMessages[ErrorCode.GAME_ALREADY_ACTIVE],
+      });
+    }
+
     if (state?.error === ErrorCode.ROOM_FULL) {
       toast.error(toastErrorTitles[ErrorCode.ROOM_FULL], {
         description: toastErrorMessages[ErrorCode.ROOM_FULL],

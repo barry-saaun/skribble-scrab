@@ -112,6 +112,12 @@ func (r *Room) IsFull() bool {
 	return len(r.Players) >= r.MaxPlayers
 }
 
+func (r *Room) isInProgress() bool {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	return r.Status == StatusInProgress
+}
+
 func (r *Room) BroadcastEvent(eventType EventType, payload any) {
 	b, err := json.Marshal(outgoingMessage{Type: string(eventType), Payload: payload})
 	if err != nil {
