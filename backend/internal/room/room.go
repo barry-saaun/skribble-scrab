@@ -1,9 +1,12 @@
-// Package room manages game rooms and their lifecycle.
+// Package room
 package room
+
+// `room.go` handles room lifecyle & connection management
 
 import (
 	"encoding/json"
 	"log"
+	"time"
 )
 
 // Sender is implemented by ws.Client — defined here to avoid an import cycle.
@@ -180,45 +183,24 @@ func (r *Room) BroadcastPlayerList() {
 	r.Broadcast(b)
 }
 
-func (r *Room) Run() {
-	for event := range r.Events {
-		switch event.Type {
-		case EventPlayerLeave:
-			if r.Game.RoundLive {
-				r.sendError(event.PlayerID, ErrCannotLeaveMidRound)
-				return
-			}
-
-			if _, ok := r.GetPlayer(event.PlayerID); ok {
-				r.RemovePlayer(event.PlayerID)
-			}
-		case EventPlayerDisconnect:
-			r.handlePlayerDisconnect(event)
-		case EventGameStart:
-			r.handleGameStart(event)
-		case EventChatMessage:
-			r.handleChatMessage(event)
-		case EventGuessSubmit:
-			r.handlePlayerGuess(event)
-		case EventRoundTick:
-			seconds, _ := event.Payload.(int)
-			r.BroadcastEvent(EventRoundTick, roundTickPayload{SecondsRemaining: seconds})
-		case EventRoundTimeout:
-			if r.Status == StatusInProgress && !r.Game.RoundEnding {
-				r.advanceDrawer(r.Game.CurrentWord, r.Game.Scores)
-			}
-		case EventRoundEnding:
-			payload := event.Payload.(roundEndingPayload)
-			r.BroadcastEvent(EventRoundEnding, payload)
-		case EventRoundEndingDone:
-			capturedRound := event.Payload.(int)
-			if r.Status == StatusInProgress && r.Game.CurrentRound == capturedRound {
-				r.advanceDrawer(r.Game.CurrentWord, r.Game.Scores)
-			}
-		case EventDrawStroke:
-			r.handleDrawStroke(event)
-		case EventDrawClear:
-			r.handleDrawClear(event)
+func (r *Room) handlePlayerDisconnect(event Event) {
+	// Give the player a short window to reconnect (handles React StrictMode
+	// double-mount, brief network hiccups, etc.). If they haven't reconnected
+	// after the grace period, remove them.
+	playerID := event.PlayerID
+	log.Printf("[room] EventPlayerDisconnect — player %s disconnected, starting 5s grace period", playerID)
+	go func() {
+		time.Sleep(5 * time.Second)
+		r.mu.RLock()
+		_, reconnected := r.Clients[playerID]
+		r.mu.RUnlock()
+		if reconnected {
+			log.Printf("[room] grace period elapsed — player %s reconnected, skipping removal", playerID)
+			return
 		}
-	}
+		log.Printf("[room] grace period elapsed — player %s did not reconnect, removing", playerID)
+		if _, ok := r.GetPlayer(playerID); ok {
+			r.RemovePlayer(playerID)
+		}
+	}()
 }
