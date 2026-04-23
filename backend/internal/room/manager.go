@@ -1,7 +1,10 @@
 package room
 
 import (
+	"context"
 	"crypto/rand"
+	"fmt"
+	"log"
 	"math/big"
 	"sync"
 	"time"
@@ -11,7 +14,7 @@ import (
 
 const idAlphabet = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 
-// TODO: allow user to customise this
+// TODO: allow user to customise this passed via the RoomConfig
 const MaxPlayers = 6
 
 type RoomManager struct {
@@ -27,7 +30,7 @@ func NewRoomManager(queries *db.Queries) *RoomManager {
 	}
 }
 
-func (m *RoomManager) CreateRoom(hostID, hostUsername, hostDisplayName string, config RoomConfig) *Room {
+func (m *RoomManager) CreateRoom(ctx context.Context, hostID, hostUsername, hostDisplayName string, config RoomConfig) (*Room, error) {
 	if config.Visibility == "" {
 		config.Visibility = VisibilityPublic
 	}
@@ -58,13 +61,35 @@ func (m *RoomManager) CreateRoom(hostID, hostUsername, hostDisplayName string, c
 		manager:         m,
 	}
 
+	if err := m.queries.InsertRoom(ctx, db.InsertRoomParams{
+		ID:              roomID,
+		HostID:          hostID,
+		HostUsername:    hostUsername,
+		HostDisplayName: hostDisplayName,
+		Visibility:      db.RoomVisibility(config.Visibility),
+		Status:          db.RoomStatus(StatusWaiting),
+		MaxPlayers:      int32(MaxPlayers),
+	}); err != nil {
+		return nil, fmt.Errorf("InsertRoom: %w", err)
+	}
+
+	if err := m.queries.InsertRoomPlayer(ctx, db.InsertRoomPlayerParams{
+		RoomID:      roomID,
+		PlayerID:    hostID,
+		Username:    hostUsername,
+		DisplayName: hostDisplayName,
+		Role:        string(RoleHost),
+	}); err != nil {
+		return nil, fmt.Errorf("InsertRoomPlayer (host): %w", err)
+	}
+
 	m.mu.Lock()
 	m.rooms[roomID] = r
 	m.mu.Unlock()
 
 	go r.Run()
 
-	return r
+	return r, nil
 }
 
 func (m *RoomManager) GetRoom(roomID string) (*Room, bool) {
@@ -78,6 +103,15 @@ func (m *RoomManager) RemoveRoom(roomID string) {
 	m.mu.Lock()
 	delete(m.rooms, roomID)
 	m.mu.Unlock()
+
+	go func() {
+		if err := m.queries.UpdateRoomStatus(context.Background(), db.UpdateRoomStatusParams{
+			ID:     roomID,
+			Status: db.RoomStatusFinished,
+		}); err != nil {
+			log.Printf("[db] RemoveRoom: failed to update status for room %s: %v", roomID, err)
+		}
+	}()
 }
 
 func generateID(n int) string {
