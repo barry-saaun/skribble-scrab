@@ -80,6 +80,19 @@ func (r *Room) handleGameStart(event Event) {
 
 	r.mu.Lock()
 	r.Status = StatusInProgress
+	r.mu.Unlock()
+
+	// reflect in_progress in DB (non-blocking)
+	go func() {
+		if err := r.queries.UpdateRoomStatus(context.Background(), db.UpdateRoomStatusParams{
+			ID:     r.ID,
+			Status: db.RoomStatusInProgress,
+		}); err != nil {
+			log.Printf("[db] UpdateRoomStatus (in_progress) failed for room %s: %v", r.ID, err)
+		}
+	}()
+
+	r.mu.Lock()
 	r.Game = GameState{
 		CurrentRound:    1,
 		CurrentRotation: 1,
@@ -192,6 +205,15 @@ func (r *Room) advanceDrawer(word string, scores map[string]int) {
 				Winner: winner,
 			})
 			go r.persistGameResults(scores)
+			//  reflect finished in DB (non-blocking)
+			go func() {
+				if err := r.queries.UpdateRoomStatus(context.Background(), db.UpdateRoomStatusParams{
+					ID:     r.ID,
+					Status: db.RoomStatusFinished,
+				}); err != nil {
+					log.Printf("[db] UpdateRoomStatus (finished) failed for room %s: %v", r.ID, err)
+				}
+			}()
 			return
 		}
 
@@ -404,4 +426,13 @@ func (r *Room) endGameEarly() {
 		Winner: winner,
 	})
 	go r.persistGameResults(r.Game.Scores)
+	// reflect finished in DB (non-blocking)
+	go func() {
+		if err := r.queries.UpdateRoomStatus(context.Background(), db.UpdateRoomStatusParams{
+			ID:     r.ID,
+			Status: db.RoomStatusFinished,
+		}); err != nil {
+			log.Printf("[db] UpdateRoomStatus (finished/early) failed for room %s: %v", r.ID, err)
+		}
+	}()
 }

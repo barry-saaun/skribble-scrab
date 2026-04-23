@@ -4,9 +4,12 @@ package room
 // `room.go` handles room lifecyle & connection management
 
 import (
+	"context"
 	"encoding/json"
 	"log"
 	"time"
+
+	"github.com/barry-saaun/skribble-scrab/backend/internal/db"
 )
 
 // handleTransferHost processes Mode B host transfers where the current host
@@ -117,6 +120,16 @@ func (r *Room) RemovePlayer(playerID string) {
 	r.mu.Unlock()
 
 	log.Printf("[room] RemovePlayer — player %s (%s / %s) evicted from Players+Clients maps", playerID, username, displayName)
+
+	// remove player from DB (non-blocking)
+	go func() {
+		if err := r.queries.DeleteRoomPlayer(context.Background(), db.DeleteRoomPlayerParams{
+			RoomID:   r.ID,
+			PlayerID: playerID,
+		}); err != nil {
+			log.Printf("[db] DeleteRoomPlayer failed for player %s in room %s: %v", playerID, r.ID, err)
+		}
+	}()
 
 	r.BroadcastEvent(EventPlayerLeft, playerLeftPayload{
 		PlayerID: playerID,
