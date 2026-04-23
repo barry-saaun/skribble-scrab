@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useActionState, useEffect } from "react";
+import React, { useActionState, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { createRoom, joinRoomAction } from "../actions";
 import {
@@ -140,8 +140,42 @@ function BrowseRoomsTab({
   );
 }
 
+type Visibility = "public" | "private";
+
+const VISIBILITY_OPTIONS: {
+  value: Visibility;
+  label: string;
+  lines: string[];
+  svgPaths: React.ReactNode;
+}[] = [
+  {
+    value: "public",
+    label: "PUBLIC",
+    lines: ["LISTED IN BROWSE.", "OPEN TO ALL."],
+    svgPaths: (
+      <>
+        <circle cx="12" cy="12" r="10" />
+        <line x1="2" y1="12" x2="22" y2="12" />
+        <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+      </>
+    ),
+  },
+  {
+    value: "private",
+    label: "PRIVATE",
+    lines: ["INVITE ONLY.", "HOST ADMITS."],
+    svgPaths: (
+      <>
+        <rect x="3" y="11" width="18" height="11" rx="0" ry="0" />
+        <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+      </>
+    ),
+  },
+];
+
 function CreateRoomTab({ defaultDisplayName }: { defaultDisplayName: string }) {
   const [state, formAction] = useActionState(createRoom, null);
+  const [visibility, setVisibility] = useState<Visibility>("public");
   const isDisabled = !USERNAME_REGEX.test(defaultDisplayName);
 
   useEffect(() => {
@@ -163,6 +197,7 @@ function CreateRoomTab({ defaultDisplayName }: { defaultDisplayName: string }) {
           name="displayName"
           value={defaultDisplayName || "Anonymous Artist"}
         />
+        <input type="hidden" name="visibility" value={visibility} />
 
         <div>
           <label className="mb-2 block text-xs uppercase tracking-widest text-muted-foreground">
@@ -193,16 +228,92 @@ function CreateRoomTab({ defaultDisplayName }: { defaultDisplayName: string }) {
           </p>
         </div>
 
+        <div>
+          <label className="mb-2 block text-xs uppercase tracking-widest text-muted-foreground">
+            ROOM VISIBILITY
+          </label>
+          <div className="grid grid-cols-2 gap-3">
+            {VISIBILITY_OPTIONS.map((opt) => {
+              const selected = visibility === opt.value;
+              return (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => setVisibility(opt.value)}
+                  className="relative cursor-pointer p-4 text-left transition-all"
+                  style={{
+                    border: selected
+                      ? "2px solid var(--brut-ink)"
+                      : "2px solid var(--border)",
+                    background: selected ? "var(--card)" : "var(--secondary)",
+                    boxShadow: selected
+                      ? "4px 4px 0px var(--brut-ink)"
+                      : "none",
+                    transform: selected ? "translate(-2px, -2px)" : "none",
+                  }}
+                >
+                  {selected && (
+                    <div
+                      className="absolute -top-1 -right-1 font-mono text-[8px] font-bold uppercase tracking-wider px-1.5 py-0.5"
+                      style={{
+                        background: "var(--primary)",
+                        color: "var(--primary-foreground)",
+                        transform: "rotate(3deg)",
+                      }}
+                    >
+                      SELECTED
+                    </div>
+                  )}
+                  <div
+                    className="w-10 h-10 flex items-center justify-center mb-3"
+                    style={{
+                      border: "2px solid var(--brut-ink)",
+                      background: selected
+                        ? "var(--primary)"
+                        : "var(--background)",
+                      color: selected
+                        ? "var(--primary-foreground)"
+                        : "var(--brut-ink)",
+                    }}
+                  >
+                    <svg
+                      width="20"
+                      height="20"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                    >
+                      {opt.svgPaths}
+                    </svg>
+                  </div>
+                  <div className="font-mono font-bold text-sm uppercase tracking-wider text-foreground mb-1">
+                    {opt.label}
+                  </div>
+                  <div className="font-mono text-[10px] text-muted-foreground leading-relaxed">
+                    {opt.lines.map((line, i) => (
+                      <React.Fragment key={line}>
+                        {line}
+                        {i < opt.lines.length - 1 && <br />}
+                      </React.Fragment>
+                    ))}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
         <button
           type="submit"
           disabled={isDisabled}
           className={`brut-press w-full border-2 px-4 py-3 text-sm font-bold uppercase ${
             isDisabled
               ? "cursor-not-allowed border-muted bg-muted text-muted-foreground opacity-50"
-              : "cursor-pointer border-foreground bg-foreground text-background hover:border-accent hover:bg-accent hover:text-accent-foreground"
+              : "cursor-pointer  text-background border-accent bg-accent "
           }`}
         >
-          CREATE ROOM &amp; JOIN
+          CREATE {visibility === "private" ? "PRIVATE" : "PUBLIC"} ROOM
         </button>
       </form>
     </div>

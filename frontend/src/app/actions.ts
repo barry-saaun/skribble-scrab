@@ -13,11 +13,19 @@ export async function createRoom(
   if (!displayName) return { error: ErrorCode.USERNAME_INVALID };
 
   const hostID = crypto.randomUUID();
+  const rawVisibility = (formData.get("visibility") as string)?.trim();
+  const visibility =
+    rawVisibility === "private" ? "private" : ("public" as const);
 
   let data, error;
   try {
     ({ data, error } = await api.POST("/api/rooms", {
-      body: { hostID, hostUsername: displayName, hostDisplayName: displayName },
+      body: {
+        hostID,
+        hostUsername: displayName,
+        hostDisplayName: displayName,
+        config: { visibility },
+      },
     }));
   } catch {
     return { error: "NETWORK_ERROR" };
