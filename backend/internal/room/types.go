@@ -24,6 +24,20 @@ const (
 	StatusFinished   Status = "finished"
 )
 
+type Visibility string
+
+const (
+	VisibilityPublic  Visibility = "public"
+	VisibilityPrivate Visibility = "private"
+)
+
+// RoomConfig holds host-controlled room settings.
+// It is stored on the Room, accepted in `createRoomRequest“, and returned in responses -> so adding a new
+// setting only requires touching this struct plus any validation logic.
+type RoomConfig struct {
+	Visibility Visibility `json:"visibility"`
+}
+
 type Player struct {
 	ID          string // UUID -> system/logic key
 	Username    string // for unique human identifier (friend requests ,lookups)
@@ -37,6 +51,7 @@ type Room struct {
 	HostID          string
 	HostUsername    string
 	HostDisplayName string
+	Config          RoomConfig
 	Game            GameState
 	Players         map[string]*Player
 	MaxPlayers      int

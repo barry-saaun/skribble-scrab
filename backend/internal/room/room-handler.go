@@ -18,18 +18,20 @@ func NewRoomHandler(manager *RoomManager) *RoomHandler {
 }
 
 type createRoomRequest struct {
-	HostID          string `json:"hostID"`
-	HostUsername    string `json:"hostUsername"`
-	HostDisplayName string `json:"hostDisplayName"`
+	HostID          string     `json:"hostID"`
+	HostUsername    string     `json:"hostUsername"`
+	HostDisplayName string     `json:"hostDisplayName"`
+	Config          RoomConfig `json:"config"`
 }
 
 type createRoomResponse struct {
-	RoomID          string    `json:"roomID"`
-	HostID          string    `json:"hostID"`
-	HostUsername    string    `json:"hostUsername"`
-	HostDisplayName string    `json:"hostDisplayName"`
-	Status          Status    `json:"status"`
-	CreatedAt       time.Time `json:"createdAt"`
+	RoomID          string     `json:"roomID"`
+	HostID          string     `json:"hostID"`
+	HostUsername    string     `json:"hostUsername"`
+	HostDisplayName string     `json:"hostDisplayName"`
+	Config          RoomConfig `json:"config"`
+	Status          Status     `json:"status"`
+	CreatedAt       time.Time  `json:"createdAt"`
 }
 
 type playerView struct {
@@ -43,6 +45,7 @@ type playerView struct {
 type getRoomResponse struct {
 	RoomID    string       `json:"roomID"`
 	HostID    string       `json:"hostID"`
+	Config    RoomConfig   `json:"config"`
 	Status    Status       `json:"status"`
 	Players   []playerView `json:"players"`
 	CreatedAt time.Time    `json:"createdAt"`
@@ -122,13 +125,24 @@ func (h *RoomHandler) HandleCreateRoom(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	room := h.manager.CreateRoom(req.HostID, req.HostUsername, req.HostDisplayName)
+	switch req.Config.Visibility {
+	case VisibilityPublic, VisibilityPrivate:
+		// valid
+	case "":
+		req.Config.Visibility = VisibilityPublic
+	default:
+		writeErrorCode(w, http.StatusBadRequest, "INVALID_VISIBILITY")
+		return
+	}
+
+	room := h.manager.CreateRoom(req.HostID, req.HostUsername, req.HostDisplayName, req.Config)
 
 	writeJSON(w, http.StatusCreated, createRoomResponse{
 		RoomID:          room.ID,
 		HostID:          room.HostID,
 		HostUsername:    room.HostUsername,
 		HostDisplayName: room.HostDisplayName,
+		Config:          room.Config,
 		Status:          room.Status,
 		CreatedAt:       room.CreatedAt,
 	})
@@ -153,6 +167,7 @@ func (h *RoomHandler) HandleGetRoom(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, getRoomResponse{
 		RoomID:    room.ID,
 		HostID:    room.HostID,
+		Config:    room.Config,
 		Status:    room.Status,
 		Players:   players,
 		CreatedAt: room.CreatedAt,

@@ -27,13 +27,17 @@ func NewRoomManager(queries *db.Queries) *RoomManager {
 	}
 }
 
-func (m *RoomManager) CreateRoom(hostID, hostUsername, HostDisplayName string) *Room {
+func (m *RoomManager) CreateRoom(hostID, hostUsername, hostDisplayName string, config RoomConfig) *Room {
+	if config.Visibility == "" {
+		config.Visibility = VisibilityPublic
+	}
+
 	roomID := generateID(6)
 
 	host := &Player{
 		ID:          hostID,
 		Username:    hostUsername,
-		DisplayName: HostDisplayName,
+		DisplayName: hostDisplayName,
 		Role:        RoleHost,
 		JoinedAt:    time.Now(),
 	}
@@ -43,7 +47,8 @@ func (m *RoomManager) CreateRoom(hostID, hostUsername, HostDisplayName string) *
 		MaxPlayers:      MaxPlayers,
 		HostID:          hostID,
 		HostUsername:    hostUsername,
-		HostDisplayName: HostDisplayName,
+		HostDisplayName: hostDisplayName,
+		Config:          config,
 		Players:         map[string]*Player{hostID: host},
 		Clients:         make(map[string]Sender),
 		Events:          make(chan Event, 256),
