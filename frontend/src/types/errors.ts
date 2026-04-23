@@ -16,6 +16,9 @@ export const ErrorCode = {
   // General room state errors
   PLAYER_ALREADY_IN_ROOM: "PLAYER_ALREADY_IN_ROOM",
   USERNAME_INVALID: "USERNAME_INVALID",
+
+  // Host transfer errors
+  INVALID_TARGET: "INVALID_TARGET",
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];
@@ -42,6 +45,7 @@ export const errorMessages: Partial<Record<ErrorCode, string>> = {
   [ErrorCode.PLAYER_ALREADY_IN_ROOM]: "You are already in this room.",
   [ErrorCode.USERNAME_INVALID]:
     "Username must be 3–20 characters and can only contain letters, numbers, underscores, or hyphens.",
+  [ErrorCode.INVALID_TARGET]: "That player is no longer in the room.",
 };
 
 /// ==== TOAST, yums ====
@@ -51,6 +55,7 @@ export const toastErrorCodes = [
   ErrorCode.PLAYER_ALREADY_IN_ROOM,
   ErrorCode.NOT_HOST,
   ErrorCode.ROOM_FULL,
+  ErrorCode.INVALID_TARGET,
 ] as const;
 
 export type ToastErrorCode = (typeof toastErrorCodes)[number];
@@ -66,6 +71,7 @@ export const toastErrorTitles: Record<ToastErrorCode, string> = {
   [ErrorCode.PLAYER_ALREADY_IN_ROOM]: "ALREADY IN ROOM",
   [ErrorCode.NOT_HOST]: "NOT HOST",
   [ErrorCode.ROOM_FULL]: "ROOM IS FULL",
+  [ErrorCode.INVALID_TARGET]: "INVALID TARGET",
 };
 
 export function isToastErrorCode(code: ErrorCode): code is ToastErrorCode {

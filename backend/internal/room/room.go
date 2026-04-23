@@ -9,6 +9,47 @@ import (
 	"time"
 )
 
+// handleTransferHost processes Mode B host transfers where the current host
+// deliberately picks their successor.
+func (r *Room) handleTransferHost(event Event) {
+	// Only the current host can initiate a transfer
+	if event.PlayerID != r.HostID {
+		r.sendError(event.PlayerID, ErrNotHost)
+		return
+	}
+
+	// Not allowing mid-game transfers - host role is a lobby concern
+	if r.Status == StatusInProgress {
+		r.sendError(event.PlayerID, ErrGameAlreadyActive)
+		return
+	}
+
+	raw, ok := event.Payload.(json.RawMessage)
+	if !ok {
+		return
+	}
+
+	var p transferHostPayload
+	if err := json.Unmarshal(raw, &p); err != nil || p.TargetPlayerID == "" {
+		return
+	}
+
+	target, ok := r.GetPlayer(p.TargetPlayerID)
+	if !ok {
+		r.sendError(event.PlayerID, ErrInvalidTarget)
+		return
+	}
+
+	r.applyHostTransfer(target)
+	r.BroadcastEvent(EventHostTransferred, hostTransferredPayload{
+		NewHostID:          r.HostID,
+		NewHostUsername:    r.HostUsername,
+		NewHostDisplayName: r.HostDisplayName,
+	})
+	r.BroadcastPlayerList()
+	log.Printf("[room] host manually transferred from %s to %s (%s)", event.PlayerID, r.HostID, r.HostDisplayName)
+}
+
 // Sender is implemented by ws.Client — defined here to avoid an import cycle.
 type Sender interface {
 	Send(msg []byte)
@@ -59,6 +100,8 @@ func (r *Room) RemovePlayer(playerID string) {
 	r.mu.RLock()
 	p, hadPlayer := r.Players[playerID]
 	_, hadClient := r.Clients[playerID]
+
+	wasHost := hadPlayer && p.Role == RoleHost // guard: p is nil when !hadPlayer
 	r.mu.RUnlock()
 
 	username, displayName := "", ""
@@ -93,6 +136,36 @@ func (r *Room) RemovePlayer(playerID string) {
 		r.manager.RemoveRoom(roomID)
 		return
 	}
+
+	// Mode A: auto-promote the longest-waiting player when the host leaves
+	if wasHost {
+		newHost := r.pickEarliestJoined()
+		if newHost != nil {
+			r.applyHostTransfer(newHost)
+			r.BroadcastEvent(EventHostTransferred, hostTransferredPayload{
+				NewHostID:          r.HostID,
+				NewHostUsername:    r.HostUsername,
+				NewHostDisplayName: r.HostDisplayName,
+			})
+			r.BroadcastPlayerList()
+			log.Printf("[room] host auto-migrated to %s (%s)", r.HostID, r.HostDisplayName)
+		}
+	}
+}
+
+// pickEarliestJoined returns the player with the earliest JoinedAt among the
+// current Players map. Returns nil only if the room is empty.
+func (r *Room) pickEarliestJoined() *Player {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	var earliest *Player
+	for _, p := range r.Players {
+		if earliest == nil || p.JoinedAt.Before(earliest.JoinedAt) {
+			earliest = p
+		}
+	}
+	return earliest
 }
 
 func (r *Room) Broadcast(msg []byte) {
@@ -203,4 +276,31 @@ func (r *Room) handlePlayerDisconnect(event Event) {
 			r.RemovePlayer(playerID)
 		}
 	}()
+}
+
+// applyHostTransfer demotes the current host to RolePlayer and promotes newHost.
+// It re-fetches newHost from the Players map under the write lock to ensure it
+// holds a live pointer. The caller must broadcast EventHostTransferred afterward.
+func (r *Room) applyHostTransfer(newHost *Player) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	// Re-fetch to guarantee we have the live pointer (safe against concurrent removals)
+	live, ok := r.Players[newHost.ID]
+	if !ok {
+		log.Printf("[room] applyHostTransfer: target player %s no longer in room", newHost.ID)
+		return
+	}
+
+	for _, p := range r.Players {
+		if p.Role == RoleHost {
+			p.Role = RolePlayer
+			break
+		}
+	}
+
+	live.Role = RoleHost
+	r.HostID = live.ID
+	r.HostUsername = live.Username
+	r.HostDisplayName = live.DisplayName
 }

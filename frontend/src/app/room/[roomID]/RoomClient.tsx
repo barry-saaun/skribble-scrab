@@ -13,6 +13,7 @@ import RoomFooter from "~/app/components/RoomFooter";
 import RoomHeader from "~/app/components/RoomHeader";
 import RoundEndingOverlay from "~/app/components/RoundEndingOverlay";
 import useCanvasSync from "~/hooks/useCanvasSync";
+import HostLeaveModal from "~/app/components/HostLeaveModal";
 
 export default function RoomClient({
   roomID,
@@ -35,16 +36,31 @@ export default function RoomClient({
     sendStroke,
     sendClear,
     sendLeave,
+    sendTransferHost,
     registerDrawCallbacks,
   } = useGameSocket({ roomID, playerID });
 
+  const isHost =
+    playerID === gameState.players.find((p) => p.role === "host")?.id;
+
   const {
     handleLeave,
-    setConfirmLeave,
+    onLeaveClick,
+    onCancelLeave,
     isNextDrawer,
     showConfirmLeave,
     isIntermission,
-  } = usePlayerPresence({ gameState, playerID, sendLeave });
+    showHostLeaveModal,
+    onCancelHostLeave,
+    onLeaveRandom,
+    onLeaveWithTransfer,
+  } = usePlayerPresence({
+    gameState,
+    playerID,
+    isHost,
+    sendLeave,
+    sendTransferHost,
+  });
 
   const { canvasRef, handleStroke, handleClear } = useCanvasSync({
     registerDrawCallbacks,
@@ -56,8 +72,6 @@ export default function RoomClient({
 
   const { inlineError } = useErrorNotifications(gameState.lastError);
 
-  const isHost =
-    playerID === gameState.players.find((p) => p.role === "host")?.id;
   const isDrawer = playerID === gameState.drawerID;
 
   return (
@@ -73,6 +87,16 @@ export default function RoomClient({
           />
         )}
 
+      {showHostLeaveModal && (
+        <HostLeaveModal
+          players={gameState.players}
+          scores={gameState.scores}
+          onLeaveRandom={onLeaveRandom}
+          onLeaveWithTransfer={onLeaveWithTransfer}
+          onCancel={onCancelHostLeave}
+        />
+      )}
+
       <RoomHeader
         roomID={roomID}
         isDrawer={isDrawer}
@@ -81,7 +105,8 @@ export default function RoomClient({
         isNextDrawer={isNextDrawer}
         isIntermission={isIntermission}
         handleLeave={handleLeave}
-        setConfirmLeave={setConfirmLeave}
+        onLeaveClick={onLeaveClick}
+        onCancelLeave={onCancelLeave}
       />
 
       {/* Word hint bar */}
@@ -110,6 +135,7 @@ export default function RoomClient({
           isHost={isHost}
           drawerWord={drawerWord}
           onStartGame={sendGameStart}
+          onTransferHost={sendTransferHost}
         />
 
         {/* Canvas */}

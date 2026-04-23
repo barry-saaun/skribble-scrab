@@ -177,6 +177,10 @@ export default function useGameSocket({
           infoRef.current(`${name} has left the room`);
         }
 
+        if (msg.type === "host.transfer.done") {
+          infoRef.current(`${msg.payload.newHostDisplayName} is now the host`);
+        }
+
         if (msg.type === "round.start") {
           setDrawerWord(msg.payload.word ?? null);
           // Clear logs at the start of each round
@@ -261,6 +265,8 @@ export default function useGameSocket({
     send("draw.stroke", payload);
   const sendClear = () => send("draw.clear");
   const sendLeave = () => send("player.leave");
+  const sendTransferHost = (targetPlayerID: string) =>
+    send("host.transfer", { targetPlayerID });
 
   return {
     gameState,
@@ -274,6 +280,7 @@ export default function useGameSocket({
     sendStroke,
     sendClear,
     sendLeave,
+    sendTransferHost,
     registerDrawCallbacks,
   };
 }

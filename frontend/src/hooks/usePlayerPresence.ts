@@ -7,27 +7,74 @@ import { GameState } from "~/types/game";
 interface TUsePlayerPresence {
   gameState: GameState;
   playerID: string;
+  isHost: boolean;
   sendLeave: () => void;
+  sendTransferHost: (targetID: string) => void;
 }
 
 export default function usePlayerPresence({
   gameState,
   playerID,
+  isHost,
   sendLeave,
+  sendTransferHost,
 }: TUsePlayerPresence) {
   const [confirmLeave, setConfirmLeave] = useState(false);
+  const [showHostLeaveModal, setShowHostLeaveModal] = useState(false);
 
   const router = useRouter();
 
+  // Standard (non-host) leave — used by Stay/Leave confirm row
   const handleLeave = useCallback(() => {
     sendLeave();
     router.push("/");
   }, [sendLeave, router]);
 
-  // Derive whether this player draws next. Only meaningful during intermission
-  // (roundLive = false, game in progress).
-  // Skips rotation boundaries intentionally:
-  // crossing into a new rotation feels like a natural break point.
+  // Called when ← LEAVE is clicked. Routes to host modal or standard confirm
+  // depending on role. Host modal is only relevant in the lobby; mid-game the
+  // backend blocks transfers anyway, so we fall through to normal confirm.
+  const onLeaveClick = useCallback(() => {
+    if (isHost && gameState.status === "waiting") {
+      const hasOtherPlayers = gameState.players.some((p) => p.role !== "host");
+      if (hasOtherPlayers) {
+        setShowHostLeaveModal(true);
+      } else {
+        // Sole occupant — no successor needed, leave immediately
+        sendLeave();
+        router.push("/");
+      }
+    } else {
+      setConfirmLeave(true);
+    }
+  }, [isHost, gameState.status, gameState.players, sendLeave, router]);
+
+  const onCancelLeave = useCallback(() => setConfirmLeave(false), []);
+
+  // ── Host-leave modal handlers ──────────────────────────────────────────────
+
+  const onCancelHostLeave = useCallback(() => setShowHostLeaveModal(false), []);
+
+  // Mode A: just leave, server auto-promotes
+  const onLeaveRandom = useCallback(() => {
+    sendLeave();
+    router.push("/");
+  }, [sendLeave, router]);
+
+  // Mode B: transfer first, then leave in the same tick.
+  // Both messages are queued on the same WS connection so the server processes
+  // host.transfer before player.leave, meaning wasHost will be false by the
+  // time RemovePlayer runs and Mode A will NOT double-fire.
+  const onLeaveWithTransfer = useCallback(
+    (targetID: string) => {
+      sendTransferHost(targetID);
+      sendLeave();
+      router.push("/");
+    },
+    [sendTransferHost, sendLeave, router],
+  );
+
+  // ── Derived state ──────────────────────────────────────────────────────────
+
   const drawerIndex = gameState.drawOrder.findIndex(
     (id) => id === gameState.drawerID,
   );
@@ -38,8 +85,6 @@ export default function usePlayerPresence({
     nextIndex < gameState.drawOrder.length &&
     gameState.drawOrder[nextIndex] === playerID;
 
-  // True only during the post-guess countdown, this is the window where leaving is allowed
-  // and we want to draw the player's eye to the Leave button.
   const isIntermission =
     gameState.status === "in_progress" &&
     !gameState.roundLive &&
@@ -54,7 +99,6 @@ export default function usePlayerPresence({
       "beforeunload",
       (e) => {
         if (!isRoundLive) return;
-
         e.preventDefault();
       },
       { signal: controller.signal },
@@ -66,10 +110,18 @@ export default function usePlayerPresence({
   const showConfirmLeave = confirmLeave && !gameState.roundLive;
 
   return {
+    // Standard leave flow
     handleLeave,
-    setConfirmLeave,
+    onLeaveClick,
+    onCancelLeave,
     isNextDrawer,
     isIntermission,
     showConfirmLeave,
+
+    // Host-leave modal
+    showHostLeaveModal,
+    onCancelHostLeave,
+    onLeaveRandom,
+    onLeaveWithTransfer,
   };
 }

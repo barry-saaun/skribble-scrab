@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import type { GameStatus, Player } from "~/types/game";
 
 interface Props {
@@ -11,6 +12,7 @@ interface Props {
   isHost: boolean;
   drawerWord: string | null;
   onStartGame: () => void;
+  onTransferHost: (targetPlayerID: string) => void;
 }
 
 export default function PlayersSidebar({
@@ -22,7 +24,15 @@ export default function PlayersSidebar({
   isHost,
   drawerWord,
   onStartGame,
+  onTransferHost,
 }: Props) {
+  const [transferTarget, setTransferTarget] = useState<string | null>(null);
+
+  const handleConfirmTransfer = (playerID: string) => {
+    onTransferHost(playerID);
+    setTransferTarget(null);
+  };
+
   return (
     <aside
       className="lg:w-52 shrink-0 bg-card flex lg:flex-col overflow-x-auto lg:overflow-x-visible overflow-y-hidden lg:overflow-y-auto"
@@ -36,59 +46,123 @@ export default function PlayersSidebar({
       </div>
 
       <div className="flex lg:flex-col min-w-0 w-full">
-        {players.map((p, i) => (
-          <div
-            key={p.id}
-            className="flex items-center gap-2 px-3 py-2.5 min-w-35 lg:min-w-0 shrink-0"
-            style={{
-              borderRight: "1px solid var(--border)",
-              borderBottom: "1px solid var(--border)",
-              background:
-                p.userName === username ? "var(--secondary)" : "transparent",
-            }}
-          >
-            <span className="font-mono text-[10px] text-muted-foreground w-4 shrink-0">
-              {String(i + 1).padStart(2, "0")}
-            </span>
+        {players.map((p, i) => {
+          const isTransferTarget = transferTarget === p.id;
+          // Show transfer button only when I'm host, lobby is open, target is not
+          // the current host, and they're actually connected
+          const canPromote =
+            isHost && status === "waiting" && p.role !== "host" && p.connected;
 
+          return (
             <div
-              className="w-6 h-6 shrink-0 flex items-center justify-center font-mono font-bold text-[10px]"
+              key={p.id}
+              className="group flex items-center gap-2 px-3 py-2.5 min-w-35 lg:min-w-0 shrink-0"
               style={{
+                borderRight: "1px solid var(--border)",
+                borderBottom: "1px solid var(--border)",
                 background:
-                  p.id === drawerID ? "var(--primary)" : "var(--secondary)",
-                color:
-                  p.id === drawerID ? "oklch(0.975 0.010 80)" : "var(--foreground)",
-                border: p.id === drawerID ? "none" : "1px solid var(--border)",
+                  p.userName === username ? "var(--secondary)" : "transparent",
               }}
             >
-              {p.userName.charAt(0).toUpperCase()}
-            </div>
+              <span className="font-mono text-[10px] text-muted-foreground w-4 shrink-0">
+                {String(i + 1).padStart(2, "0")}
+              </span>
 
-            <div className="min-w-0 flex-1">
               <div
-                className="font-mono text-[10px] font-bold truncate"
+                className="w-6 h-6 shrink-0 flex items-center justify-center font-mono font-bold text-[10px]"
                 style={{
+                  background:
+                    p.id === drawerID ? "var(--primary)" : "var(--secondary)",
                   color:
-                    p.userName === username
-                      ? "var(--primary)"
+                    p.id === drawerID
+                      ? "oklch(0.975 0.010 80)"
                       : "var(--foreground)",
+                  border:
+                    p.id === drawerID ? "none" : "1px solid var(--border)",
                 }}
               >
-                {p.userName}
+                {p.userName.charAt(0).toUpperCase()}
               </div>
-              <div className="font-mono text-[10px] text-muted-foreground">
-                {scores[p.id] ?? 0} PTS
-              </div>
-            </div>
 
-            {p.id === drawerID && (
-              <div
-                className="w-1.5 h-1.5 rounded-full animate-pulse shrink-0"
-                style={{ background: "var(--primary)" }}
-              />
-            )}
-          </div>
-        ))}
+              <div className="min-w-0 flex-1">
+                <div
+                  className="font-mono text-[10px] font-bold truncate"
+                  style={{
+                    color:
+                      p.userName === username
+                        ? "var(--primary)"
+                        : "var(--foreground)",
+                  }}
+                >
+                  {p.userName}
+                </div>
+                <div className="font-mono text-[10px] text-muted-foreground">
+                  {scores[p.id] ?? 0} PTS
+                </div>
+              </div>
+
+              {/* Right-side slot: drawer pulse, HOST badge, or transfer UI */}
+              {p.id === drawerID ? (
+                <div
+                  className="w-1.5 h-1.5 rounded-full animate-pulse shrink-0"
+                  style={{ background: "var(--primary)" }}
+                />
+              ) : isTransferTarget ? (
+                /* ── Inline transfer confirmation ── */
+                <div className="flex items-center gap-1 shrink-0 confirm-leave-enter">
+                  <span className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground hidden lg:inline">
+                    HOST?
+                  </span>
+                  <button
+                    onClick={() => handleConfirmTransfer(p.id)}
+                    className="font-mono text-[9px] uppercase tracking-widest px-1.5 py-0.5 brut-press"
+                    style={{
+                      border: "1px solid var(--primary)",
+                      color: "var(--primary)",
+                    }}
+                  >
+                    YES
+                  </button>
+                  <button
+                    onClick={() => setTransferTarget(null)}
+                    className="font-mono text-[9px] uppercase tracking-widest px-1.5 py-0.5 brut-press"
+                    style={{
+                      border: "1px solid var(--border)",
+                      color: "var(--muted-foreground)",
+                    }}
+                  >
+                    NO
+                  </button>
+                </div>
+              ) : p.role === "host" ? (
+                /* ── HOST badge on the host's own row ── */
+                <span
+                  className="font-mono text-[9px] uppercase tracking-widest px-1 py-0.5 shrink-0"
+                  style={{
+                    border: "1px solid var(--primary)",
+                    color: "var(--primary)",
+                  }}
+                >
+                  HOST
+                </span>
+              ) : canPromote ? (
+                /* ── Promote button (visible on hover on desktop, always on mobile) ── */
+                <button
+                  onClick={() => setTransferTarget(p.id)}
+                  className="font-mono text-[9px] uppercase tracking-widest px-1.5 py-0.5 shrink-0 brut-press lg:opacity-0 lg:group-hover:opacity-100"
+                  style={{
+                    border: "1px solid var(--border)",
+                    color: "var(--muted-foreground)",
+                    transition:
+                      "opacity 0.1s, box-shadow 0.08s ease-out, transform 0.08s ease-out",
+                  }}
+                >
+                  → HOST
+                </button>
+              ) : null}
+            </div>
+          );
+        })}
       </div>
 
       {/* Standings — desktop only */}

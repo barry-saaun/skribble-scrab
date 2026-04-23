@@ -18,7 +18,8 @@ interface Props {
   isNextDrawer: boolean;
   isIntermission: boolean;
   handleLeave: () => void;
-  setConfirmLeave: (v: boolean) => void;
+  onLeaveClick: () => void;
+  onCancelLeave: () => void;
 }
 
 export default function RoomHeader({
@@ -29,7 +30,8 @@ export default function RoomHeader({
   isNextDrawer,
   isIntermission,
   handleLeave,
-  setConfirmLeave,
+  onLeaveClick,
+  onCancelLeave,
 }: Props) {
   const secondsLeft = gameState.secondsRemaining ?? 0;
   const timerPct = Math.min((secondsLeft / 60) * 100, 100);
@@ -56,7 +58,7 @@ export default function RoomHeader({
             </span>
           )}
           <button
-            onClick={() => setConfirmLeave(false)}
+            onClick={onCancelLeave}
             className="brut-press font-mono font-bold uppercase tracking-widest text-[10px] py-1.5 px-3 bg-transparent"
             style={{
               border: "2px solid var(--brut-ink)",
@@ -85,9 +87,7 @@ export default function RoomHeader({
               <span className="inline-flex shrink-0">
                 <button
                   onClick={
-                    gameState.roundLive
-                      ? undefined
-                      : () => setConfirmLeave(true)
+                    gameState.roundLive ? undefined : onLeaveClick
                   }
                   disabled={gameState.roundLive}
                   className="brut-press font-mono font-bold uppercase tracking-widest text-[10px] py-1.5 px-3 bg-transparent"

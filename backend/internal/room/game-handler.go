@@ -39,6 +39,8 @@ func (r *Room) Run() {
 			r.handleDrawStroke(event)
 		case EventDrawClear:
 			r.handleDrawClear(event)
+		case EventTransferHost:
+			r.handleTransferHost(event)
 		}
 	}
 }
