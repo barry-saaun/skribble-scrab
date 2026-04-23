@@ -5,8 +5,96 @@
 package db
 
 import (
+	"database/sql/driver"
+	"fmt"
+
 	"github.com/jackc/pgx/v5/pgtype"
 )
+
+type RoomStatus string
+
+const (
+	RoomStatusWaiting    RoomStatus = "waiting"
+	RoomStatusInProgress RoomStatus = "in_progress"
+	RoomStatusFinished   RoomStatus = "finished"
+)
+
+func (e *RoomStatus) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = RoomStatus(s)
+	case string:
+		*e = RoomStatus(s)
+	default:
+		return fmt.Errorf("unsupported scan type for RoomStatus: %T", src)
+	}
+	return nil
+}
+
+type NullRoomStatus struct {
+	RoomStatus RoomStatus `json:"room_status"`
+	Valid      bool       `json:"valid"` // Valid is true if RoomStatus is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullRoomStatus) Scan(value interface{}) error {
+	if value == nil {
+		ns.RoomStatus, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.RoomStatus.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullRoomStatus) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.RoomStatus), nil
+}
+
+type RoomVisibility string
+
+const (
+	RoomVisibilityPrivate RoomVisibility = "private"
+	RoomVisibilityPublic  RoomVisibility = "public"
+)
+
+func (e *RoomVisibility) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = RoomVisibility(s)
+	case string:
+		*e = RoomVisibility(s)
+	default:
+		return fmt.Errorf("unsupported scan type for RoomVisibility: %T", src)
+	}
+	return nil
+}
+
+type NullRoomVisibility struct {
+	RoomVisibility RoomVisibility `json:"room_visibility"`
+	Valid          bool           `json:"valid"` // Valid is true if RoomVisibility is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullRoomVisibility) Scan(value interface{}) error {
+	if value == nil {
+		ns.RoomVisibility, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.RoomVisibility.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullRoomVisibility) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.RoomVisibility), nil
+}
 
 type GameResult struct {
 	ID          int32              `json:"id"`
@@ -15,6 +103,27 @@ type GameResult struct {
 	DisplayName string             `json:"display_name"`
 	Score       int32              `json:"score"`
 	PlayedAt    pgtype.Timestamptz `json:"played_at"`
+}
+
+type Room struct {
+	ID              string             `json:"id"`
+	HostID          string             `json:"host_id"`
+	HostUsername    string             `json:"host_username"`
+	HostDisplayName string             `json:"host_display_name"`
+	Visibility      RoomVisibility     `json:"visibility"`
+	Status          RoomStatus         `json:"status"`
+	MaxPlayers      int32              `json:"max_players"`
+	CreatedAt       pgtype.Timestamptz `json:"created_at"`
+	FinishedAt      pgtype.Timestamptz `json:"finished_at"`
+}
+
+type RoomPlayer struct {
+	RoomID      string             `json:"room_id"`
+	PlayerID    string             `json:"player_id"`
+	Username    string             `json:"username"`
+	DisplayName string             `json:"display_name"`
+	Role        string             `json:"role"`
+	JoinedAt    pgtype.Timestamptz `json:"joined_at"`
 }
 
 type Word struct {
