@@ -18,11 +18,11 @@ import HostLeaveModal from "~/app/components/HostLeaveModal";
 export default function RoomClient({
   roomID,
   playerID,
-  username,
+  userName,
 }: {
   roomID: string;
   playerID: string;
-  username: string;
+  userName: string;
 }) {
   const {
     gameState,
@@ -130,7 +130,7 @@ export default function RoomClient({
           players={gameState.players}
           scores={gameState.scores}
           drawerID={gameState.drawerID}
-          username={username}
+          userName={userName}
           status={gameState.status}
           isHost={isHost}
           drawerWord={drawerWord}
@@ -174,7 +174,7 @@ export default function RoomClient({
           <ChatBox
             chatLog={chatLog}
             players={gameState.players}
-            username={username}
+            userName={userName}
             isDrawer={isDrawer}
             onSend={sendChat}
           />

@@ -1,7 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import type { GameStatus, Player } from "~/types/game";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "~/components/ui/tooltip";
 import type { GameStatus, Player, Scores, PlayerID } from "~/types/game";
 
 interface Props {
@@ -49,10 +54,14 @@ export default function PlayersSidebar({
       <div className="flex lg:flex-col min-w-0 w-full">
         {players.map((p, i) => {
           const isTransferTarget = transferTarget === p.id;
-          // Show transfer button only when I'm host, lobby is open, target is not
-          // the current host, and they're actually connected
+          // Show promote button whenever I'm host and the game isn't actively
+          // running — backend allows transfers in both "waiting" and "finished".
+          // Hide during "in_progress" since the backend would reject it anyway.
           const canPromote =
-            isHost && status === "waiting" && p.role !== "host" && p.connected;
+            isHost &&
+            status !== "in_progress" &&
+            p.role !== "host" &&
+            p.connected;
 
           return (
             <div
@@ -147,19 +156,41 @@ export default function PlayersSidebar({
                   HOST
                 </span>
               ) : canPromote ? (
-                /* ── Promote button (visible on hover on desktop, always on mobile) ── */
-                <button
-                  onClick={() => setTransferTarget(p.id)}
-                  className="font-mono text-[9px] uppercase tracking-widest px-1.5 py-0.5 shrink-0 brut-press lg:opacity-0 lg:group-hover:opacity-100"
-                  style={{
-                    border: "1px solid var(--border)",
-                    color: "var(--muted-foreground)",
-                    transition:
-                      "opacity 0.1s, box-shadow 0.08s ease-out, transform 0.08s ease-out",
-                  }}
-                >
-                  → HOST
-                </button>
+                /* ── Promote button — faint at rest, ink on hover ── */
+                <>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button
+                          onClick={() => setTransferTarget(p.id)}
+                          title="Make host"
+                          className="font-mono text-[9px] uppercase tracking-widest px-1.5 py-0.5 shrink-0 brut-press opacity-30 group-hover:opacity-100"
+                          style={{
+                            border: "1px solid var(--border)",
+                            color: "var(--foreground)",
+                            transition:
+                              "opacity 0.12s, box-shadow 0.08s ease-out, transform 0.08s ease-out, border-color 0.12s",
+                          }}
+                          onMouseEnter={(e) => {
+                            (e.currentTarget as HTMLElement).style.borderColor =
+                              "var(--primary)";
+                            (e.currentTarget as HTMLElement).style.color =
+                              "var(--primary)";
+                          }}
+                          onMouseLeave={(e) => {
+                            (e.currentTarget as HTMLElement).style.borderColor =
+                              "var(--border)";
+                            (e.currentTarget as HTMLElement).style.color =
+                              "var(--foreground)";
+                          }}
+                        >
+                          ♛
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent side="bottom">Make host</TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </>
               ) : null}
             </div>
           );
