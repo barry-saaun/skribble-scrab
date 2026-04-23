@@ -18,5 +18,5 @@ export default async function RoomPage({
   // 409 is fine — the host is already registered on room creation.
   await joinRoom(roomID, playerID, username);
 
-  return <RoomClient roomID={roomID} playerID={playerID} username={username} />;
+  return <RoomClient roomID={roomID} playerID={playerID} userName={username} />;
 }
