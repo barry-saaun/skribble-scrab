@@ -2,33 +2,34 @@
 
 import { useState } from "react";
 import type { GameStatus, Player } from "~/types/game";
+import type { GameStatus, Player, Scores, PlayerID } from "~/types/game";
 
 interface Props {
   players: Player[];
-  scores: Record<string, number>;
-  drawerID: string | null;
-  username: string;
+  scores: Scores;
+  drawerID: PlayerID | null;
+  userName: string;
   status: GameStatus;
   isHost: boolean;
   drawerWord: string | null;
   onStartGame: () => void;
-  onTransferHost: (targetPlayerID: string) => void;
+  onTransferHost: (targetPlayerID: PlayerID) => void;
 }
 
 export default function PlayersSidebar({
   players,
   scores,
   drawerID,
-  username,
+  userName,
   status,
   isHost,
   drawerWord,
   onStartGame,
   onTransferHost,
 }: Props) {
-  const [transferTarget, setTransferTarget] = useState<string | null>(null);
+  const [transferTarget, setTransferTarget] = useState<PlayerID | null>(null);
 
-  const handleConfirmTransfer = (playerID: string) => {
+  const handleConfirmTransfer = (playerID: PlayerID) => {
     onTransferHost(playerID);
     setTransferTarget(null);
   };
@@ -61,7 +62,7 @@ export default function PlayersSidebar({
                 borderRight: "1px solid var(--border)",
                 borderBottom: "1px solid var(--border)",
                 background:
-                  p.userName === username ? "var(--secondary)" : "transparent",
+                  p.userName === userName ? "var(--secondary)" : "transparent",
               }}
             >
               <span className="font-mono text-[10px] text-muted-foreground w-4 shrink-0">
@@ -89,7 +90,7 @@ export default function PlayersSidebar({
                   className="font-mono text-[10px] font-bold truncate"
                   style={{
                     color:
-                      p.userName === username
+                      p.userName === userName
                         ? "var(--primary)"
                         : "var(--foreground)",
                   }}

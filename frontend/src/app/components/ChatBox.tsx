@@ -6,13 +6,13 @@ import type { ChatEntry } from "~/types/events";
 export default function ChatBox({
   chatLog,
   players,
-  username,
+  userName,
   isDrawer,
   onSend,
 }: {
   chatLog: ChatEntry[];
   players: { id: string; userName: string }[];
-  username: string;
+  userName: string;
   isDrawer: boolean;
   onSend: (text: string) => void;
 }) {
@@ -56,7 +56,7 @@ export default function ChatBox({
                 style={{
                   color:
                     players.find((p) => p.id === m.playerID)?.userName ===
-                    username
+                    userName
                       ? "var(--primary)"
                       : "var(--foreground)",
                 }}
