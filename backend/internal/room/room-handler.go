@@ -1,10 +1,14 @@
 package room
 
 import (
+	"context"
 	"encoding/json"
+	"log"
 	"net/http"
 	"regexp"
 	"time"
+
+	"github.com/barry-saaun/skribble-scrab/backend/internal/db"
 )
 
 var usernameRegex = regexp.MustCompile(`^[a-zA-Z0-9][a-zA-Z0-9_-]{1,18}[a-zA-Z0-9]$`)
@@ -65,6 +69,21 @@ type joinRoomResponse struct {
 	Role              Role   `json:"role"`
 }
 
+type publicRoomView struct {
+	RoomID          string     `json:"roomID"`
+	HostUsername    string     `json:"hostUsername"`
+	HostDisplayName string     `json:"hostDisplayName"`
+	Visibility      Visibility `json:"visibility"`
+	Status          Status     `json:"status"`
+	MaxPlayers      int        `json:"maxPlayers"`
+	PlayerCount     int        `json:"playerCount"`
+	CreatedAt       time.Time  `json:"createdAt"`
+}
+
+type listRoomsResponse struct {
+	Rooms []publicRoomView `json:"rooms"`
+}
+
 func (h *RoomHandler) HandleJoinRoom(w http.ResponseWriter, r *http.Request) {
 	roomID := r.PathValue("roomID")
 
@@ -104,6 +123,18 @@ func (h *RoomHandler) HandleJoinRoom(w http.ResponseWriter, r *http.Request) {
 	player := &Player{ID: req.PlayerID, Username: req.PlayerUsername, DisplayName: req.PlayerDisplayName, Role: RolePlayer, JoinedAt: time.Now()}
 	room.AddPlayer(player)
 
+	go func() {
+		if err := room.queries.InsertRoomPlayer(context.Background(), db.InsertRoomPlayerParams{
+			RoomID:      roomID,
+			PlayerID:    player.ID,
+			Username:    player.Username,
+			DisplayName: player.DisplayName,
+			Role:        string(player.Role),
+		}); err != nil {
+			log.Printf("[db] InsertRoomPlayer failed for player %s in room %s: %v", player.ID, roomID, err)
+		}
+	}()
+
 	writeJSON(w, http.StatusCreated, joinRoomResponse{
 		PlayerID:          player.ID,
 		PlayerUsername:    player.Username,
@@ -135,7 +166,12 @@ func (h *RoomHandler) HandleCreateRoom(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	room := h.manager.CreateRoom(req.HostID, req.HostUsername, req.HostDisplayName, req.Config)
+	room, err := h.manager.CreateRoom(r.Context(), req.HostID, req.HostUsername, req.HostDisplayName, req.Config)
+	if err != nil {
+		log.Printf("[db] CreateRoom failed: %v", err)
+		writeErrorCode(w, http.StatusInternalServerError, "INTERNAL_ERROR")
+		return
+	}
 
 	writeJSON(w, http.StatusCreated, createRoomResponse{
 		RoomID:          room.ID,
@@ -172,4 +208,37 @@ func (h *RoomHandler) HandleGetRoom(w http.ResponseWriter, r *http.Request) {
 		Players:   players,
 		CreatedAt: room.CreatedAt,
 	})
+}
+
+func (h *RoomHandler) HandleListPublicRooms(w http.ResponseWriter, r *http.Request) {
+	rooms, err := h.manager.queries.ListPublicRooms(r.Context())
+	if err != nil {
+		log.Printf("[db] ListPublicRooms failed: %v", err)
+		writeErrorCode(w, http.StatusInternalServerError, "INTERNAL_ERROR")
+		return
+	}
+
+	views := make([]publicRoomView, 0, len(rooms))
+	for _, rm := range rooms {
+		// cross-reference with in-memory map for live player count
+		playerCount := 0
+		if activeRoom, ok := h.manager.GetRoom(rm.ID); ok {
+			activeRoom.mu.RLock()
+			playerCount = len(activeRoom.Players)
+			activeRoom.mu.RUnlock()
+		}
+
+		views = append(views, publicRoomView{
+			RoomID:          rm.ID,
+			HostUsername:    rm.HostUsername,
+			HostDisplayName: rm.HostDisplayName,
+			Visibility:      Visibility(rm.Visibility),
+			Status:          Status(rm.Status),
+			MaxPlayers:      int(rm.MaxPlayers),
+			PlayerCount:     playerCount,
+			CreatedAt:       rm.CreatedAt.Time,
+		})
+	}
+
+	writeJSON(w, http.StatusOK, listRoomsResponse{Rooms: views})
 }
