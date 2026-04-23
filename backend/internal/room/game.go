@@ -1,5 +1,8 @@
 package room
 
+// `game.go` handles the game domain logic
+// owns: Game state, scoring, game progression, round mechanics
+
 import (
 	"context"
 	"encoding/json"
@@ -45,28 +48,6 @@ func getNumOfRotation(numOfPlayers int) int {
 	default:
 		return 1
 	}
-}
-
-func (r *Room) handlePlayerDisconnect(event Event) {
-	// Give the player a short window to reconnect (handles React StrictMode
-	// double-mount, brief network hiccups, etc.). If they haven't reconnected
-	// after the grace period, remove them.
-	playerID := event.PlayerID
-	log.Printf("[room] EventPlayerDisconnect — player %s disconnected, starting 5s grace period", playerID)
-	go func() {
-		time.Sleep(5 * time.Second)
-		r.mu.RLock()
-		_, reconnected := r.Clients[playerID]
-		r.mu.RUnlock()
-		if reconnected {
-			log.Printf("[room] grace period elapsed — player %s reconnected, skipping removal", playerID)
-			return
-		}
-		log.Printf("[room] grace period elapsed — player %s did not reconnect, removing", playerID)
-		if _, ok := r.GetPlayer(playerID); ok {
-			r.RemovePlayer(playerID)
-		}
-	}()
 }
 
 // handleGameStart starts the game. Only the host can trigger this, and only from StatusWaiting.

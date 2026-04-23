@@ -4,8 +4,12 @@ export type Role = "host" | "player" | "spectator";
 
 export type GameStatus = "waiting" | "in_progress" | "finished";
 
+export type PlayerID = string;
+
+export type Scores = Record<PlayerID, number>;
+
 export interface Player {
-  id: string;
+  id: PlayerID;
   userName: string;
   displayName: string;
   role: Role;
@@ -15,17 +19,17 @@ export interface Player {
 export interface GameState {
   status: GameStatus;
   players: Player[];
-  scores: Record<string, number>;
+  scores: Scores;
   currentRound: number;
   currentRotation: number;
   totalRotations: number;
-  drawOrder: string[];
-  drawerID: string | null;
+  drawOrder: PlayerID[];
+  drawerID: PlayerID | null;
   wordLength: number | null;
   secondsRemaining: number | null;
   roundEndingCountdown: number | null;
-  roundEndingGuesserID: string | null;
-  winner: string | null;
+  roundEndingGuesserID: PlayerID | null;
+  winner: PlayerID | null;
   roundLive: boolean;
 
   lastError: ErrorPayload | null;

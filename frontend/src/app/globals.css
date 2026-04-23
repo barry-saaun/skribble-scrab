@@ -1,6 +1,5 @@
 @import "tailwindcss";
 @import "tw-animate-css";
-@import "shadcn/tailwind.css";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -254,6 +253,48 @@
   .brut-label {
     @apply font-mono text-xs uppercase tracking-widest text-muted-foreground;
   }
+  /* Host-leave modal — panel drops in from above with a slight scale pop */
+  @keyframes modal-drop-in {
+    from {
+      opacity: 0;
+      transform: translateY(-14px) scale(0.97);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+  .modal-drop-in {
+    animation: modal-drop-in 0.2s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  /* Backdrop fades in independently so it doesn't fight the panel timing */
+  @keyframes backdrop-fade-in {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+  .backdrop-fade-in {
+    animation: backdrop-fade-in 0.15s ease-out both;
+  }
+
+  /* Step content slides in from the right (forward) */
+  @keyframes step-enter-right {
+    from { opacity: 0; transform: translateX(20px); }
+    to   { opacity: 1; transform: translateX(0); }
+  }
+  .step-enter-right {
+    animation: step-enter-right 0.14s ease-out both;
+  }
+
+  /* Step content slides in from the left (back) */
+  @keyframes step-enter-left {
+    from { opacity: 0; transform: translateX(-20px); }
+    to   { opacity: 1; transform: translateX(0); }
+  }
+  .step-enter-left {
+    animation: step-enter-left 0.14s ease-out both;
+  }
+
   /* Subtle paper texture scan-line — very faint warm tint */
   .scan-line {
     background: repeating-linear-gradient(

@@ -11,6 +11,9 @@ export type EventType =
   | "player.joined"
   | "player.leave"
   | "player.left"
+  // Host migration
+  | "host.transfer"      // client → server: host picks a successor (Mode B)
+  | "host.transfer.done" // server → client: host changed (Mode A or B)
   // Game lifecycle
   | "game.start"
   | "game.end"
@@ -117,6 +120,12 @@ export interface GameEndPayload {
   winner: string;
 }
 
+export interface HostTransferredPayload {
+  newHostID: string;
+  newHostUsername: string;
+  newHostDisplayName: string;
+}
+
 // ---- Canvas imperative handle ----
 
 export interface CanvasHandle {
@@ -142,6 +151,7 @@ export interface ChatSendPayload {
 export type ServerMessage =
   | { type: "room.player_list"; payload: PlayerListPayload }
   | { type: "player.left"; payload: PlayerLeftPayload }
+  | { type: "host.transfer.done"; payload: HostTransferredPayload }
   | { type: "rotation.start"; payload: RotationStartPayload }
   | { type: "rotation.complete"; payload: RotationCompletePayload }
   | { type: "round.start"; payload: RoundStartPayload }

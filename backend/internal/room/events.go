@@ -10,6 +10,10 @@ const (
 	EventPlayerLeft       EventType = "player.left"       // server → client
 	EventPlayerList       EventType = "room.player_list"
 
+	// Host migration
+	EventTransferHost    EventType = "host.transfer"      // client -> server: host deliberately picks a successor
+	EventHostTransferred EventType = "host.transfer.done" // server -> client: broadcast after any host change (both random auto-promote OR host picks)
+
 	// Game lifecycle
 	EventGameStart EventType = "game.start"
 	EventGameEnd   EventType = "game.end"
@@ -48,6 +52,7 @@ const (
 	ErrNotEnoughPlayers  = "NOT_ENOUGH_PLAYERS"
 	ErrNotYourTurnToDraw = "NOT_YOUR_TURN"
 	ErrGuessCooldown     = "GUESS_COOLDOWN"
+	ErrInvalidTarget     = "INVALID_TARGET" // host transfer: target player not found
 )
 
 // Error codes for room access / join error

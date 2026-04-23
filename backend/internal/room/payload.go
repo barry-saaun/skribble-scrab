@@ -86,3 +86,19 @@ type playerJoinedPayload struct {
 type playerLeftPayload struct {
 	PlayerID string `json:"playerID"`
 }
+
+// ========
+// Mode A: Random auto-promote
+// Mode B: Host picks
+
+// incoming (mode B)
+type transferHostPayload struct {
+	TargetPlayerID string `json:"targetPlayerID"`
+}
+
+// outgoing (both modes)
+type hostTransferredPayload struct {
+	NewHostID          string `json:"newHostID"`
+	NewHostUsername    string `json:"newHostUsername"`
+	NewHostDisplayName string `json:"newHostDisplayName"`
+}

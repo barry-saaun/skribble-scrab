@@ -1,28 +1,44 @@
 "use client";
 
-import type { GameStatus, Player } from "~/types/game";
+import { useState } from "react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "~/components/ui/tooltip";
+import type { GameStatus, Player, Scores, PlayerID } from "~/types/game";
 
 interface Props {
   players: Player[];
-  scores: Record<string, number>;
-  drawerID: string | null;
-  username: string;
+  scores: Scores;
+  drawerID: PlayerID | null;
+  userName: string;
   status: GameStatus;
   isHost: boolean;
   drawerWord: string | null;
   onStartGame: () => void;
+  onTransferHost: (targetPlayerID: PlayerID) => void;
 }
 
 export default function PlayersSidebar({
   players,
   scores,
   drawerID,
-  username,
+  userName,
   status,
   isHost,
   drawerWord,
   onStartGame,
+  onTransferHost,
 }: Props) {
+  const [transferTarget, setTransferTarget] = useState<PlayerID | null>(null);
+
+  const handleConfirmTransfer = (playerID: PlayerID) => {
+    onTransferHost(playerID);
+    setTransferTarget(null);
+  };
+
   return (
     <aside
       className="lg:w-52 shrink-0 bg-card flex lg:flex-col overflow-x-auto lg:overflow-x-visible overflow-y-hidden lg:overflow-y-auto"
@@ -36,59 +52,149 @@ export default function PlayersSidebar({
       </div>
 
       <div className="flex lg:flex-col min-w-0 w-full">
-        {players.map((p, i) => (
-          <div
-            key={p.id}
-            className="flex items-center gap-2 px-3 py-2.5 min-w-35 lg:min-w-0 shrink-0"
-            style={{
-              borderRight: "1px solid var(--border)",
-              borderBottom: "1px solid var(--border)",
-              background:
-                p.userName === username ? "var(--secondary)" : "transparent",
-            }}
-          >
-            <span className="font-mono text-[10px] text-muted-foreground w-4 shrink-0">
-              {String(i + 1).padStart(2, "0")}
-            </span>
+        {players.map((p, i) => {
+          const isTransferTarget = transferTarget === p.id;
+          // Show promote button whenever I'm host and the game isn't actively
+          // running — backend allows transfers in both "waiting" and "finished".
+          // Hide during "in_progress" since the backend would reject it anyway.
+          const canPromote =
+            isHost &&
+            status !== "in_progress" &&
+            p.role !== "host" &&
+            p.connected;
 
+          return (
             <div
-              className="w-6 h-6 shrink-0 flex items-center justify-center font-mono font-bold text-[10px]"
+              key={p.id}
+              className="group flex items-center gap-2 px-3 py-2.5 min-w-35 lg:min-w-0 shrink-0"
               style={{
+                borderRight: "1px solid var(--border)",
+                borderBottom: "1px solid var(--border)",
                 background:
-                  p.id === drawerID ? "var(--primary)" : "var(--secondary)",
-                color:
-                  p.id === drawerID ? "oklch(0.975 0.010 80)" : "var(--foreground)",
-                border: p.id === drawerID ? "none" : "1px solid var(--border)",
+                  p.userName === userName ? "var(--secondary)" : "transparent",
               }}
             >
-              {p.userName.charAt(0).toUpperCase()}
-            </div>
+              <span className="font-mono text-[10px] text-muted-foreground w-4 shrink-0">
+                {String(i + 1).padStart(2, "0")}
+              </span>
 
-            <div className="min-w-0 flex-1">
               <div
-                className="font-mono text-[10px] font-bold truncate"
+                className="w-6 h-6 shrink-0 flex items-center justify-center font-mono font-bold text-[10px]"
                 style={{
+                  background:
+                    p.id === drawerID ? "var(--primary)" : "var(--secondary)",
                   color:
-                    p.userName === username
-                      ? "var(--primary)"
+                    p.id === drawerID
+                      ? "oklch(0.975 0.010 80)"
                       : "var(--foreground)",
+                  border:
+                    p.id === drawerID ? "none" : "1px solid var(--border)",
                 }}
               >
-                {p.userName}
+                {p.userName.charAt(0).toUpperCase()}
               </div>
-              <div className="font-mono text-[10px] text-muted-foreground">
-                {scores[p.id] ?? 0} PTS
-              </div>
-            </div>
 
-            {p.id === drawerID && (
-              <div
-                className="w-1.5 h-1.5 rounded-full animate-pulse shrink-0"
-                style={{ background: "var(--primary)" }}
-              />
-            )}
-          </div>
-        ))}
+              <div className="min-w-0 flex-1">
+                <div
+                  className="font-mono text-[10px] font-bold truncate"
+                  style={{
+                    color:
+                      p.userName === userName
+                        ? "var(--primary)"
+                        : "var(--foreground)",
+                  }}
+                >
+                  {p.userName}
+                </div>
+                <div className="font-mono text-[10px] text-muted-foreground">
+                  {scores[p.id] ?? 0} PTS
+                </div>
+              </div>
+
+              {/* Right-side slot: drawer pulse, HOST badge, or transfer UI */}
+              {p.id === drawerID ? (
+                <div
+                  className="w-1.5 h-1.5 rounded-full animate-pulse shrink-0"
+                  style={{ background: "var(--primary)" }}
+                />
+              ) : isTransferTarget ? (
+                /* ── Inline transfer confirmation ── */
+                <div className="flex items-center gap-1 shrink-0 confirm-leave-enter">
+                  <span className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground hidden lg:inline">
+                    HOST?
+                  </span>
+                  <button
+                    onClick={() => handleConfirmTransfer(p.id)}
+                    className="font-mono text-[9px] uppercase tracking-widest px-1.5 py-0.5 brut-press"
+                    style={{
+                      border: "1px solid var(--primary)",
+                      color: "var(--primary)",
+                    }}
+                  >
+                    YES
+                  </button>
+                  <button
+                    onClick={() => setTransferTarget(null)}
+                    className="font-mono text-[9px] uppercase tracking-widest px-1.5 py-0.5 brut-press"
+                    style={{
+                      border: "1px solid var(--border)",
+                      color: "var(--muted-foreground)",
+                    }}
+                  >
+                    NO
+                  </button>
+                </div>
+              ) : p.role === "host" ? (
+                /* ── HOST badge on the host's own row ── */
+                <span
+                  className="font-mono text-[9px] uppercase tracking-widest px-1 py-0.5 shrink-0"
+                  style={{
+                    border: "1px solid var(--primary)",
+                    color: "var(--primary)",
+                  }}
+                >
+                  HOST
+                </span>
+              ) : canPromote ? (
+                /* ── Promote button — faint at rest, ink on hover ── */
+                <>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button
+                          onClick={() => setTransferTarget(p.id)}
+                          title="Make host"
+                          className="font-mono text-[9px] uppercase tracking-widest px-1.5 py-0.5 shrink-0 brut-press opacity-30 group-hover:opacity-100"
+                          style={{
+                            border: "1px solid var(--border)",
+                            color: "var(--foreground)",
+                            transition:
+                              "opacity 0.12s, box-shadow 0.08s ease-out, transform 0.08s ease-out, border-color 0.12s",
+                          }}
+                          onMouseEnter={(e) => {
+                            (e.currentTarget as HTMLElement).style.borderColor =
+                              "var(--primary)";
+                            (e.currentTarget as HTMLElement).style.color =
+                              "var(--primary)";
+                          }}
+                          onMouseLeave={(e) => {
+                            (e.currentTarget as HTMLElement).style.borderColor =
+                              "var(--border)";
+                            (e.currentTarget as HTMLElement).style.color =
+                              "var(--foreground)";
+                          }}
+                        >
+                          ♛
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent side="bottom">Make host</TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </>
+              ) : null}
+            </div>
+          );
+        })}
       </div>
 
       {/* Standings — desktop only */}
