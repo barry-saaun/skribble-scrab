@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"log"
 	"net/http"
 
@@ -10,6 +11,9 @@ import (
 	"github.com/barry-saaun/skribble-scrab/backend/internal/db"
 	"github.com/barry-saaun/skribble-scrab/backend/internal/room"
 	"github.com/barry-saaun/skribble-scrab/backend/internal/ws"
+	"github.com/golang-migrate/migrate/v4"
+	_ "github.com/golang-migrate/migrate/v4/database/postgres"
+	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/joho/godotenv"
 )
@@ -32,6 +36,16 @@ func main() {
 		log.Fatalf("database ping failed: %v", err)
 	}
 	log.Println("database connected")
+
+	// Run migrations
+	m, err := migrate.New("file://db/migrations", cfg.DatabaseURL)
+	if err != nil {
+		log.Fatalf("failed to initialise migrator: %v", err)
+	}
+	if err := m.Up(); err != nil && !errors.Is(err, migrate.ErrNoChange) {
+		log.Fatalf("migration failed: %v", err)
+	}
+	log.Println("migrations applied")
 
 	queries := db.New(pool)
 

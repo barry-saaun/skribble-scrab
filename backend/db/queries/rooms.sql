@@ -1,6 +1,7 @@
 -- name: InsertRoom :exec
-INSERT INTO rooms (id, host_id, host_username, host_display_name, visibility, status, max_players)
-VALUES ($1, $2, $3, $4, $5, $6, $7);
+INSERT INTO rooms (id, name, host_id, host_username, host_display_name, visibility, status, max_players)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+RETURNING *;
 
 -- name: GetRoomByID :one
 SELECT * FROM rooms WHERE id = $1;

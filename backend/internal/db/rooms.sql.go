@@ -24,7 +24,7 @@ func (q *Queries) DeleteRoomPlayer(ctx context.Context, arg DeleteRoomPlayerPara
 }
 
 const getRoomByID = `-- name: GetRoomByID :one
-SELECT id, host_id, host_username, host_display_name, visibility, status, max_players, created_at, finished_at FROM rooms WHERE id = $1
+SELECT id, host_id, host_username, host_display_name, visibility, status, max_players, created_at, finished_at, name FROM rooms WHERE id = $1
 `
 
 func (q *Queries) GetRoomByID(ctx context.Context, id string) (Room, error) {
@@ -40,17 +40,20 @@ func (q *Queries) GetRoomByID(ctx context.Context, id string) (Room, error) {
 		&i.MaxPlayers,
 		&i.CreatedAt,
 		&i.FinishedAt,
+		&i.Name,
 	)
 	return i, err
 }
 
 const insertRoom = `-- name: InsertRoom :exec
-INSERT INTO rooms (id, host_id, host_username, host_display_name, visibility, status, max_players)
-VALUES ($1, $2, $3, $4, $5, $6, $7)
+INSERT INTO rooms (id, name, host_id, host_username, host_display_name, visibility, status, max_players)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+RETURNING id, host_id, host_username, host_display_name, visibility, status, max_players, created_at, finished_at, name
 `
 
 type InsertRoomParams struct {
 	ID              string         `json:"id"`
+	Name            string         `json:"name"`
 	HostID          string         `json:"host_id"`
 	HostUsername    string         `json:"host_username"`
 	HostDisplayName string         `json:"host_display_name"`
@@ -62,6 +65,7 @@ type InsertRoomParams struct {
 func (q *Queries) InsertRoom(ctx context.Context, arg InsertRoomParams) error {
 	_, err := q.db.Exec(ctx, insertRoom,
 		arg.ID,
+		arg.Name,
 		arg.HostID,
 		arg.HostUsername,
 		arg.HostDisplayName,
@@ -97,7 +101,7 @@ func (q *Queries) InsertRoomPlayer(ctx context.Context, arg InsertRoomPlayerPara
 }
 
 const listPublicRooms = `-- name: ListPublicRooms :many
-SELECT id, host_id, host_username, host_display_name, visibility, status, max_players, created_at, finished_at FROM rooms
+SELECT id, host_id, host_username, host_display_name, visibility, status, max_players, created_at, finished_at, name FROM rooms
 WHERE visibility = 'public' AND status = 'waiting'
 ORDER BY created_at DESC
 `
@@ -121,6 +125,7 @@ func (q *Queries) ListPublicRooms(ctx context.Context) ([]Room, error) {
 			&i.MaxPlayers,
 			&i.CreatedAt,
 			&i.FinishedAt,
+			&i.Name,
 		); err != nil {
 			return nil, err
 		}
