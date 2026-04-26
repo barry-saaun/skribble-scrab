@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { CreateRoomTab, JoinByCodeTab, BrowseRoomsTab, USERNAME_REGEX } from "./LobbyTabs";
+import { CreateRoomTab, JoinByCodeTab, BrowseRoomsTab } from "./LobbyTabs";
+import { USERNAME_REGEX } from "~/types/events";
 
 type Tab = "browse" | "create" | "join";
 
@@ -22,6 +23,8 @@ export function Lobby() {
   const [activeTab, setActiveTab] = useState<Tab>("browse");
   const [defaultDisplayName, setDefaultDisplayName] = useState("");
   const [codeInput, setCodeInput] = useState<string[]>(Array(6).fill(""));
+  // Temporary: generate a stable playerID for this session until auth is implemented
+  const [playerID] = useState(() => crypto.randomUUID());
 
   const tabContent = (
     <>
@@ -29,10 +32,14 @@ export function Lobby() {
         <BrowseRoomsTab defaultDisplayName={defaultDisplayName} />
       )}
       {activeTab === "create" && (
-        <CreateRoomTab defaultDisplayName={defaultDisplayName} />
+        <CreateRoomTab
+          playerID={playerID}
+          defaultDisplayName={defaultDisplayName}
+        />
       )}
       {activeTab === "join" && (
         <JoinByCodeTab
+          playerID={playerID}
           defaultDisplayName={defaultDisplayName}
           codeInput={codeInput}
           setCodeInput={setCodeInput}

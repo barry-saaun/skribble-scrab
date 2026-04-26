@@ -88,7 +88,7 @@ export interface components {
         CreateRoomRequest: {
             hostID: string;
             hostUsername: string;
-            hostDisplayName?: string;
+            hostDisplayName: string;
             config: components["schemas"]["RoomConfig"];
         };
         CreateRoomResponse: {

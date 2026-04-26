@@ -155,7 +155,7 @@ components:
 
     CreateRoomRequest:
       type: object
-      required: [hostID, hostUsername, config]
+      required: [hostID, hostDisplayName, hostUsername, config]
       properties:
         hostID:
           type: string

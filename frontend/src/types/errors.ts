@@ -21,13 +21,13 @@ export const ErrorCode = {
   INVALID_TARGET: "INVALID_TARGET",
 } as const;
 
-export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];
+export type TErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];
 
-export interface ErrorPayload<TCode extends ErrorCode = ErrorCode> {
+export interface ErrorPayload<TCode extends TErrorCode = TErrorCode> {
   code: TCode;
 }
 
-export const errorMessages: Partial<Record<ErrorCode, string>> = {
+export const errorMessages: Partial<Record<TErrorCode, string>> = {
   // Game errors
   [ErrorCode.NOT_HOST]: "You are not host",
   [ErrorCode.GAME_ALREADY_ACTIVE]: "The game is currently active",
@@ -74,8 +74,8 @@ export const toastErrorTitles: Record<ToastErrorCode, string> = {
   [ErrorCode.INVALID_TARGET]: "INVALID TARGET",
 };
 
-export function isToastErrorCode(code: ErrorCode): code is ToastErrorCode {
-  return (toastErrorCodes as readonly ErrorCode[]).includes(code);
+export function isToastErrorCode(code: TErrorCode): code is ToastErrorCode {
+  return (toastErrorCodes as readonly TErrorCode[]).includes(code);
 }
 
 /// ==== FULL PAGE ====
@@ -103,6 +103,6 @@ export const inlineErrorMessages = Object.fromEntries(
   inlineErrorCodes.map((code) => [code, errorMessages[code]]),
 ) as Record<InlineErrorCodes, string>;
 
-export function isInlineErrorCode(code: ErrorCode): code is InlineErrorCodes {
-  return (inlineErrorCodes as readonly ErrorCode[]).includes(code);
+export function isInlineErrorCode(code: TErrorCode): code is InlineErrorCodes {
+  return (inlineErrorCodes as readonly TErrorCode[]).includes(code);
 }

@@ -86,9 +86,7 @@ export default function RoomHeader({
             <TooltipTrigger asChild>
               <span className="inline-flex shrink-0">
                 <button
-                  onClick={
-                    gameState.roundLive ? undefined : onLeaveClick
-                  }
+                  onClick={gameState.roundLive ? undefined : onLeaveClick}
                   disabled={gameState.roundLive}
                   className="brut-press font-mono font-bold uppercase tracking-widest text-[10px] py-1.5 px-3 bg-transparent"
                   style={{
@@ -97,7 +95,9 @@ export default function RoomHeader({
                     opacity: gameState.roundLive ? 0.35 : 1,
                     cursor: gameState.roundLive ? "not-allowed" : "pointer",
                     pointerEvents: gameState.roundLive ? "none" : "auto",
-                    boxShadow: isIntermission ? "var(--brut-shadow-sm)" : "none",
+                    boxShadow: isIntermission
+                      ? "var(--brut-shadow-sm)"
+                      : "none",
                   }}
                 >
                   ← LEAVE

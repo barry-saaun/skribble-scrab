@@ -2,9 +2,11 @@ import { ErrorPayload } from "./errors";
 
 import type { components } from "~/api/v1";
 
-export type Role = "host" | "player" | "spectator";
+type Schemas = components["schemas"];
 
-export type GameStatus = "waiting" | "in_progress" | "finished";
+export type Role = Schemas["Role"];
+
+export type GameStatus = Schemas["Status"];
 
 export type PlayerID = string;
 
