@@ -34,6 +34,7 @@ export type EventType =
   | "draw.clear"
   // Chat
   | "chat.message"
+  | "chat.history"
   // Error
   | "error";
 
@@ -96,6 +97,11 @@ export interface DrawStrokePayload {
 export interface ChatMessagePayload {
   playerID: string;
   text: string;
+  timestamp: string; // ISO 8601 from server
+}
+
+export interface ChatHistoryPayload {
+  messages: ChatMessagePayload[];
 }
 
 // ---- Client-side log entry types ----
@@ -103,6 +109,7 @@ export interface ChatMessagePayload {
 export interface ChatEntry {
   playerID: string;
   text: string;
+  timestamp: Date;
 }
 
 export interface GuessEntry {
@@ -159,6 +166,7 @@ export type ServerMessage =
   | { type: "draw.stroke"; payload: DrawStrokePayload }
   | { type: "draw.clear"; payload: Record<string, never> }
   | { type: "chat.message"; payload: ChatMessagePayload }
+  | { type: "chat.history"; payload: ChatHistoryPayload }
   | { type: "round.ending"; payload: RoundEndingPayload }
   | { type: "game.end"; payload: GameEndPayload }
   | { type: "error"; payload: ErrorPayload };

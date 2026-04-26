@@ -55,8 +55,8 @@ func (h *Handler) HandleWS(w http.ResponseWriter, r *http.Request) {
 	client := NewClient(conn, roomID, player.ID, player.Username, player.DisplayName)
 	room.AddClient(client)
 
-	room.BroadcastPlayerList()
-
 	go client.WritePump()
+	room.BroadcastPlayerList()
+	room.SendChatHistory(player.ID)
 	go client.ReadPump(room)
 }

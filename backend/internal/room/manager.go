@@ -55,6 +55,7 @@ func (m *RoomManager) CreateRoom(ctx context.Context, hostID, hostUsername, host
 	// Persist to DB first — DB is the authoritative source of truth.
 	if err := m.queries.InsertRoom(ctx, db.InsertRoomParams{
 		ID:              roomID,
+		Name:            config.Name,
 		HostID:          hostID,
 		HostUsername:    hostUsername,
 		HostDisplayName: hostDisplayName,

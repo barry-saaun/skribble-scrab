@@ -198,7 +198,7 @@ func (r *Room) IsFull() bool {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 
-	return len(r.Players) >= r.MaxPlayers
+	return len(r.Players) >= r.Config.MaxPlayers
 }
 
 func (r *Room) isInProgress() bool {
@@ -229,6 +229,26 @@ func (r *Room) BroadcastExceptSender(senderID string, msg []byte) {
 	for _, c := range clients {
 		c.Send(msg)
 	}
+}
+
+func (r *Room) SendChatHistory(playerID string) {
+	r.mu.RLock()
+	client, ok := r.Clients[playerID]
+	msgs := make([]chatBroadcastPayload, len(r.ChatLog))
+	for i, m := range r.ChatLog {
+		msgs[i] = chatBroadcastPayload{PlayerID: m.PlayerID, Text: m.Text, Timestamp: m.Timestamp}
+	}
+	r.mu.RUnlock()
+
+	if !ok || len(msgs) == 0 {
+		return
+	}
+
+	b, err := json.Marshal(outgoingMessage{Type: string(EventChatHistory), Payload: chatHistoryPayload{Messages: msgs}})
+	if err != nil {
+		return
+	}
+	client.Send(b)
 }
 
 func (r *Room) sendError(playerID, code string) {

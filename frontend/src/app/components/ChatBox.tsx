@@ -48,8 +48,7 @@ export default function ChatBox({
               className="font-mono text-xs flex gap-2 leading-relaxed"
             >
               <span className="text-muted-foreground shrink-0">
-                {String(Math.floor(i / 60)).padStart(2, "0")}:
-                {String(i % 60).padStart(2, "0")}
+                {m.timestamp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
               </span>
               <span
                 className="font-bold shrink-0"

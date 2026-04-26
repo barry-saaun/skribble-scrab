@@ -1,5 +1,7 @@
 package room
 
+import "time"
+
 // incoming payloads
 type guessPayload struct {
 	Word string `json:"word"`
@@ -26,8 +28,13 @@ type roundResultPayload struct {
 }
 
 type chatBroadcastPayload struct {
-	PlayerID string `json:"playerID"`
-	Text     string `json:"text"`
+	PlayerID  string    `json:"playerID"`
+	Text      string    `json:"text"`
+	Timestamp time.Time `json:"timestamp"`
+}
+
+type chatHistoryPayload struct {
+	Messages []chatBroadcastPayload `json:"messages"`
 }
 
 type rotationStartPayload struct {

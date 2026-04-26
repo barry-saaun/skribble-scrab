@@ -48,6 +48,12 @@ type Player struct {
 	JoinedAt    time.Time
 }
 
+type StoredChatMessage struct {
+	PlayerID  string
+	Text      string
+	Timestamp time.Time
+}
+
 type Room struct {
 	ID              string
 	HostID          string
@@ -60,6 +66,7 @@ type Room struct {
 	Events          chan Event
 	Status          Status
 	CreatedAt       time.Time
+	ChatLog         []StoredChatMessage
 	queries         *db.Queries
 	mu              sync.RWMutex
 

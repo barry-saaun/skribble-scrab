@@ -102,6 +102,7 @@ export default function RoomClient({
 
       <RoomHeader
         roomID={roomID}
+        roomName={config.name}
         isDrawer={isDrawer}
         gameState={gameState}
         showConfirmLeave={showConfirmLeave}

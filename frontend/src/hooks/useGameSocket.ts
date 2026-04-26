@@ -4,6 +4,7 @@ import { useToast } from "~/hooks/useToast";
 import { env } from "~/env";
 import type {
   ChatEntry,
+  ChatHistoryPayload,
   DrawStrokePayload,
   EventType,
   GuessEntry,
@@ -194,10 +195,19 @@ export default function useGameSocket({
           setDrawerWord(null);
         }
 
+        if (msg.type === "chat.history") {
+          const history = (msg.payload as ChatHistoryPayload).messages.map((m) => ({
+            playerID: m.playerID,
+            text: m.text,
+            timestamp: new Date(m.timestamp),
+          }));
+          setChatLog(history);
+        }
+
         if (msg.type === "chat.message") {
           setChatLog((prev) => [
             ...prev,
-            { playerID: msg.payload.playerID, text: msg.payload.text },
+            { playerID: msg.payload.playerID, text: msg.payload.text, timestamp: new Date(msg.payload.timestamp) },
           ]);
         }
 
