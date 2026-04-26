@@ -36,6 +36,8 @@ const (
 // setting only requires touching this struct plus any validation logic.
 type RoomConfig struct {
 	Visibility Visibility `json:"visibility"`
+	Name       string     `json:"name"`
+	MaxPlayers int        `json:"maxPlayers"`
 }
 
 type Player struct {

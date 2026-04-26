@@ -1,5 +1,7 @@
 import { ErrorPayload } from "./errors";
 
+import type { components } from "~/api/v1";
+
 export type Role = "host" | "player" | "spectator";
 
 export type GameStatus = "waiting" | "in_progress" | "finished";
@@ -7,6 +9,8 @@ export type GameStatus = "waiting" | "in_progress" | "finished";
 export type PlayerID = string;
 
 export type Scores = Record<PlayerID, number>;
+
+export type RoomConfig = components["schemas"]["RoomConfig"];
 
 export interface Player {
   id: PlayerID;
