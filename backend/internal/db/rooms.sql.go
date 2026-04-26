@@ -153,3 +153,34 @@ func (q *Queries) UpdateRoomStatus(ctx context.Context, arg UpdateRoomStatusPara
 	_, err := q.db.Exec(ctx, updateRoomStatus, arg.ID, arg.Status)
 	return err
 }
+
+const listRoomPlayers = `-- name: ListRoomPlayers :many
+SELECT room_id, player_id, username, display_name, role, joined_at FROM room_players WHERE room_id = $1 ORDER BY joined_at ASC
+`
+
+func (q *Queries) ListRoomPlayers(ctx context.Context, roomID string) ([]RoomPlayer, error) {
+	rows, err := q.db.Query(ctx, listRoomPlayers, roomID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []RoomPlayer
+	for rows.Next() {
+		var i RoomPlayer
+		if err := rows.Scan(
+			&i.RoomID,
+			&i.PlayerID,
+			&i.Username,
+			&i.DisplayName,
+			&i.Role,
+			&i.JoinedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}

@@ -56,7 +56,6 @@ type Room struct {
 	Config          RoomConfig
 	Game            GameState
 	Players         map[string]*Player
-	MaxPlayers      int
 	Clients         map[string]Sender
 	Events          chan Event
 	Status          Status
@@ -64,7 +63,7 @@ type Room struct {
 	queries         *db.Queries
 	mu              sync.RWMutex
 
-	// TEMPORARY: in-memory
+	// manager is used to call RemoveRoom when the last player leaves.
 	manager *RoomManager
 }
 

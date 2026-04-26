@@ -23,3 +23,9 @@ VALUES ($1, $2, $3, $4, $5);
 
 -- name: DeleteRoomPlayer :exec
 DELETE FROM room_players WHERE room_id = $1 AND player_id = $2;
+
+-- name: ListRoomPlayers :many
+SELECT room_id, player_id, username, display_name, role, joined_at
+FROM room_players
+WHERE room_id = $1
+ORDER BY joined_at ASC;

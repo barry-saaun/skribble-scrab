@@ -1,14 +1,15 @@
 package room
 
 import (
-	"context"
 	"encoding/json"
+	"errors"
 	"log"
 	"net/http"
 	"regexp"
 	"time"
 
 	"github.com/barry-saaun/skribble-scrab/backend/internal/db"
+	"github.com/jackc/pgx/v5"
 )
 
 var usernameRegex = regexp.MustCompile(`^[a-zA-Z0-9][a-zA-Z0-9_-]{1,18}[a-zA-Z0-9]$`)
@@ -47,7 +48,8 @@ type playerView struct {
 }
 
 type getRoomResponse struct {
-	RoomID    string       `json:"roomID"`
+	ID        string       `json:"ID"`
+	Name      string       `json:"name"`
 	HostID    string       `json:"hostID"`
 	Config    RoomConfig   `json:"config"`
 	Status    Status       `json:"status"`
@@ -84,6 +86,11 @@ type listRoomsResponse struct {
 	Rooms []publicRoomView `json:"rooms"`
 }
 
+// HandleJoinRoom adds a player to an existing room.
+// Room existence, status, capacity, and duplicate-player checks are all
+// performed against the database (single source of truth). The in-memory
+// Room goroutine is synced afterward so the WebSocket layer sees the new
+// player immediately.
 func (h *RoomHandler) HandleJoinRoom(w http.ResponseWriter, r *http.Request) {
 	roomID := r.PathValue("roomID")
 
@@ -98,42 +105,72 @@ func (h *RoomHandler) HandleJoinRoom(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	room, ok := h.manager.GetRoom(roomID)
+	// --- DB checks (authoritative) ---
 
-	if !ok {
-		writeErrorCode(w, http.StatusNotFound, ErrRoomNotFound)
+	dbRoom, err := h.manager.queries.GetRoomByID(r.Context(), roomID)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			writeErrorCode(w, http.StatusNotFound, ErrRoomNotFound)
+		} else {
+			log.Printf("[db] HandleJoinRoom GetRoomByID failed for room %s: %v", roomID, err)
+			writeErrorCode(w, http.StatusInternalServerError, "INTERNAL_ERROR")
+		}
 		return
 	}
 
-	if _, ok := room.GetPlayer(req.PlayerID); ok {
-		writeErrorCode(w, http.StatusConflict, ErrPlayerAlreadyInRoom)
-		return
-	}
-
-	if room.isInProgress() {
+	if dbRoom.Status != db.RoomStatusWaiting {
 		writeErrorCode(w, http.StatusConflict, ErrGameAlreadyActive)
 		return
 	}
 
-	if room.IsFull() {
+	dbPlayers, err := h.manager.queries.ListRoomPlayers(r.Context(), roomID)
+	if err != nil {
+		log.Printf("[db] HandleJoinRoom ListRoomPlayers failed for room %s: %v", roomID, err)
+		writeErrorCode(w, http.StatusInternalServerError, "INTERNAL_ERROR")
+		return
+	}
+
+	for _, p := range dbPlayers {
+		if p.PlayerID == req.PlayerID {
+			writeErrorCode(w, http.StatusConflict, ErrPlayerAlreadyInRoom)
+			return
+		}
+	}
+
+	if len(dbPlayers) >= int(dbRoom.MaxPlayers) {
 		writeErrorCode(w, http.StatusConflict, ErrRoomFull)
 		return
 	}
 
-	player := &Player{ID: req.PlayerID, Username: req.PlayerUsername, DisplayName: req.PlayerDisplayName, Role: RolePlayer, JoinedAt: time.Now()}
-	room.AddPlayer(player)
+	// --- Persist to DB (synchronously — DB is written before we respond) ---
 
-	go func() {
-		if err := room.queries.InsertRoomPlayer(context.Background(), db.InsertRoomPlayerParams{
-			RoomID:      roomID,
-			PlayerID:    player.ID,
-			Username:    player.Username,
-			DisplayName: player.DisplayName,
-			Role:        string(player.Role),
-		}); err != nil {
-			log.Printf("[db] InsertRoomPlayer failed for player %s in room %s: %v", player.ID, roomID, err)
-		}
-	}()
+	player := &Player{
+		ID:          req.PlayerID,
+		Username:    req.PlayerUsername,
+		DisplayName: req.PlayerDisplayName,
+		Role:        RolePlayer,
+		JoinedAt:    time.Now(),
+	}
+
+	if err := h.manager.queries.InsertRoomPlayer(r.Context(), db.InsertRoomPlayerParams{
+		RoomID:      roomID,
+		PlayerID:    player.ID,
+		Username:    player.Username,
+		DisplayName: player.DisplayName,
+		Role:        string(player.Role),
+	}); err != nil {
+		log.Printf("[db] InsertRoomPlayer failed for player %s in room %s: %v", player.ID, roomID, err)
+		writeErrorCode(w, http.StatusInternalServerError, "INTERNAL_ERROR")
+		return
+	}
+
+	// --- Sync to the live Room goroutine if one is running ---
+	// The active room keeps its own in-memory player map for WebSocket
+	// broadcast operations. We add the player there so it is visible
+	// immediately once they open a WS connection.
+	if activeRoom, ok := h.manager.GetRoom(roomID); ok {
+		activeRoom.AddPlayer(player)
+	}
 
 	writeJSON(w, http.StatusCreated, joinRoomResponse{
 		PlayerID:          player.ID,
@@ -184,32 +221,70 @@ func (h *RoomHandler) HandleCreateRoom(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+// HandleGetRoom returns the current state of a room.
+// Room metadata and the player roster are loaded from the database.
+// The Connected field on each player is resolved against the live Room
+// goroutine (if one is running) to reflect active WebSocket connections.
 func (h *RoomHandler) HandleGetRoom(w http.ResponseWriter, r *http.Request) {
 	roomID := r.PathValue("roomID")
-	room, ok := h.manager.GetRoom(roomID)
-	if !ok {
-		writeErrorCode(w, http.StatusNotFound, "ROOM_NOT_FOUND")
+
+	dbRoom, err := h.manager.queries.GetRoomByID(r.Context(), roomID)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			writeErrorCode(w, http.StatusNotFound, "ROOM_NOT_FOUND")
+		} else {
+			log.Printf("[db] HandleGetRoom GetRoomByID failed for room %s: %v", roomID, err)
+			writeErrorCode(w, http.StatusInternalServerError, "INTERNAL_ERROR")
+		}
 		return
 	}
 
-	room.mu.RLock()
-	players := make([]playerView, 0, len(room.Players))
-	for _, p := range room.Players {
-		_, connected := room.Clients[p.ID]
-		players = append(players, playerView{ID: p.ID, Username: p.Username, DisplayName: p.DisplayName, Role: p.Role, Connected: connected})
+	dbPlayers, err := h.manager.queries.ListRoomPlayers(r.Context(), roomID)
+	if err != nil {
+		log.Printf("[db] HandleGetRoom ListRoomPlayers failed for room %s: %v", roomID, err)
+		writeErrorCode(w, http.StatusInternalServerError, "INTERNAL_ERROR")
+		return
 	}
-	room.mu.RUnlock()
+
+	// Determine which players are currently connected via WebSocket.
+	// This is the one piece of information that only the live Room holds.
+	connectedIDs := map[string]bool{}
+	if activeRoom, ok := h.manager.GetRoom(roomID); ok {
+		activeRoom.mu.RLock()
+		for id := range activeRoom.Clients {
+			connectedIDs[id] = true
+		}
+		activeRoom.mu.RUnlock()
+	}
+
+	players := make([]playerView, 0, len(dbPlayers))
+	for _, p := range dbPlayers {
+		players = append(players, playerView{
+			ID:          p.PlayerID,
+			Username:    p.Username,
+			DisplayName: p.DisplayName,
+			Role:        Role(p.Role),
+			Connected:   connectedIDs[p.PlayerID],
+		})
+	}
 
 	writeJSON(w, http.StatusOK, getRoomResponse{
-		RoomID:    room.ID,
-		HostID:    room.HostID,
-		Config:    room.Config,
-		Status:    room.Status,
+		ID:     dbRoom.ID,
+		Name:   dbRoom.Name,
+		HostID: dbRoom.HostID,
+		Config: RoomConfig{
+			Visibility: Visibility(dbRoom.Visibility),
+			Name:       dbRoom.Name,
+			MaxPlayers: int(dbRoom.MaxPlayers),
+		},
+		Status:    Status(dbRoom.Status),
 		Players:   players,
-		CreatedAt: room.CreatedAt,
+		CreatedAt: dbRoom.CreatedAt.Time,
 	})
 }
 
+// HandleListPublicRooms returns all public rooms that are currently waiting.
+// Both room metadata and player counts come from the database.
 func (h *RoomHandler) HandleListPublicRooms(w http.ResponseWriter, r *http.Request) {
 	rooms, err := h.manager.queries.ListPublicRooms(r.Context())
 	if err != nil {
@@ -220,12 +295,11 @@ func (h *RoomHandler) HandleListPublicRooms(w http.ResponseWriter, r *http.Reque
 
 	views := make([]publicRoomView, 0, len(rooms))
 	for _, rm := range rooms {
-		// cross-reference with in-memory map for live player count
-		playerCount := 0
-		if activeRoom, ok := h.manager.GetRoom(rm.ID); ok {
-			activeRoom.mu.RLock()
-			playerCount = len(activeRoom.Players)
-			activeRoom.mu.RUnlock()
+		players, err := h.manager.queries.ListRoomPlayers(r.Context(), rm.ID)
+		if err != nil {
+			log.Printf("[db] ListRoomPlayers failed for room %s: %v", rm.ID, err)
+			writeErrorCode(w, http.StatusInternalServerError, "INTERNAL_ERROR")
+			return
 		}
 
 		views = append(views, publicRoomView{
@@ -235,7 +309,7 @@ func (h *RoomHandler) HandleListPublicRooms(w http.ResponseWriter, r *http.Reque
 			Visibility:      Visibility(rm.Visibility),
 			Status:          Status(rm.Status),
 			MaxPlayers:      int(rm.MaxPlayers),
-			PlayerCount:     playerCount,
+			PlayerCount:     len(players),
 			CreatedAt:       rm.CreatedAt.Time,
 		})
 	}
