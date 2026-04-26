@@ -3,7 +3,7 @@
 import { useTransition, useEffect, useState } from "react";
 import { createRoom } from "../actions";
 import type { ActionResult } from "../actions";
-import { ErrorCode, errorMessages } from "~/types/errors";
+import { ErrorCode, errorMessages, inlineErrorMessages } from "~/types/errors";
 import { USERNAME_REGEX } from "~/types/events";
 import { toast } from "sonner";
 import React from "react";
@@ -53,8 +53,20 @@ function CreateRoomTab({
   const [isPending, startTransition] = useTransition();
   const [visibility, setVisibility] = useState<Visibility>("public");
   const [roomName, setRoomName] = useState<string>("");
+  const [maxPlayersRaw, setMaxPlayersRaw] = useState("6");
+
+  const maxPlayersError = (() => {
+    const n = Number(maxPlayersRaw);
+    if (!maxPlayersRaw || !Number.isInteger(n) || n < 2 || n > 20)
+      return inlineErrorMessages[ErrorCode.MAX_PLAYERS_INVALID];
+    return null;
+  })();
+
   const isDisabled =
-    !playerID || !USERNAME_REGEX.test(defaultDisplayName) || !roomName;
+    !playerID ||
+    !USERNAME_REGEX.test(defaultDisplayName) ||
+    !roomName ||
+    maxPlayersError !== null;
 
   useEffect(() => {
     if (!state?.error) return;
@@ -74,7 +86,7 @@ function CreateRoomTab({
         hostID: playerID,
         hostUsername: defaultDisplayName,
         hostDisplayName: defaultDisplayName,
-        config: { visibility, name: roomName, maxPlayers: 10 },
+        config: { visibility, name: roomName, maxPlayers: parseInt(maxPlayersRaw, 10) },
       });
       setState(result);
     });
@@ -130,6 +142,25 @@ function CreateRoomTab({
           {/*     3–20 CHARS · LETTERS, NUMBERS, _ OR - · NO SPACES */}
           {/*   </p> */}
           {/* )} */}
+        </div>
+
+        <div>
+          <label className="mb-2 block text-xs uppercase tracking-widest text-muted-foreground">
+            MAX PLAYERS
+          </label>
+          <input
+            type="number"
+            value={maxPlayersRaw}
+            onChange={(e) => setMaxPlayersRaw(e.target.value)}
+            placeholder="E.G. 6"
+            className="w-full border-2 border-foreground bg-input px-3 py-2 text-sm font-mono tracking-wider focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:ring-offset-background [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+            style={maxPlayersError ? { borderColor: "var(--destructive)" } : {}}
+          />
+          {maxPlayersError && (
+            <p className="mt-1.5 text-xs uppercase tracking-wider" style={{ color: "var(--destructive)" }}>
+              {maxPlayersError}
+            </p>
+          )}
         </div>
 
         <div>

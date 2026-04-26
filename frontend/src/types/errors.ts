@@ -17,6 +17,7 @@ export const ErrorCode = {
   PLAYER_ALREADY_IN_ROOM: "PLAYER_ALREADY_IN_ROOM",
   USERNAME_INVALID: "USERNAME_INVALID",
   MISSING_PLAYER_ID: "MISSING_PLAYER_ID",
+  MAX_PLAYERS_INVALID: "MAX_PLAYERS_INVALID",
 
   // Host transfer errors
   INVALID_TARGET: "INVALID_TARGET",
@@ -45,6 +46,7 @@ export const errorMessages: Partial<Record<TErrorCode, string>> = {
   // General room state errors
   [ErrorCode.PLAYER_ALREADY_IN_ROOM]: "You are already in this room.",
   [ErrorCode.MISSING_PLAYER_ID]: "Missing Player ID in the request form.",
+  [ErrorCode.MAX_PLAYERS_INVALID]: "Must be a whole number between 2 and 20.",
   [ErrorCode.USERNAME_INVALID]:
     "Username must be 3–20 characters and can only contain letters, numbers, underscores, or hyphens.",
   [ErrorCode.INVALID_TARGET]: "That player is no longer in the room.",
@@ -100,7 +102,10 @@ export const fullPageErrorTitles: Record<FullPageErrorCodes, string> = {
 };
 
 //// === IN-LINE ====
-export const inlineErrorCodes = [ErrorCode.GUESS_COOLDOWN] as const;
+export const inlineErrorCodes = [
+  ErrorCode.GUESS_COOLDOWN,
+  ErrorCode.MAX_PLAYERS_INVALID,
+] as const;
 
 export type InlineErrorCodes = (typeof inlineErrorCodes)[number];
 export type InlineErrorPayload = ErrorPayload<InlineErrorCodes>;
