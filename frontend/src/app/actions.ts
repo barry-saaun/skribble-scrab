@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
 import { api } from "~/api/client";
 import { ErrorCode } from "~/types/errors";
 import type { CreateRoomRequest } from "~/types/server";
@@ -30,9 +31,13 @@ export async function createRoom(
   if (error) return { error: error.code };
   if (!data) return { error: "NETWORK_ERROR" };
 
-  redirect(
-    `/room/${data.roomID}?playerID=${encodeURIComponent(hostID)}&username=${encodeURIComponent(hostUsername)}`,
-  );
+  (await cookies()).set("playerID", hostID, {
+    httpOnly: true,
+    sameSite: "lax",
+    path: "/",
+  });
+
+  redirect(`/room/${data.roomID}`);
 }
 
 export async function joinRoomAction(
@@ -68,9 +73,13 @@ export async function joinRoomAction(
     redirect(`/error?code=ROOM_NOT_FOUND&room=${encodeURIComponent(roomCode)}`);
   }
 
-  redirect(
-    `/room/${roomCode}?playerID=${encodeURIComponent(playerID)}&username=${encodeURIComponent(displayName)}`,
-  );
+  (await cookies()).set("playerID", playerID, {
+    httpOnly: true,
+    sameSite: "lax",
+    path: "/",
+  });
+
+  redirect(`/room/${roomCode}`);
 }
 
 export async function joinRoom(

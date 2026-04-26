@@ -16,6 +16,7 @@ export const ErrorCode = {
   // General room state errors
   PLAYER_ALREADY_IN_ROOM: "PLAYER_ALREADY_IN_ROOM",
   USERNAME_INVALID: "USERNAME_INVALID",
+  MISSING_PLAYER_ID: "MISSING_PLAYER_ID",
 
   // Host transfer errors
   INVALID_TARGET: "INVALID_TARGET",
@@ -43,6 +44,7 @@ export const errorMessages: Partial<Record<TErrorCode, string>> = {
 
   // General room state errors
   [ErrorCode.PLAYER_ALREADY_IN_ROOM]: "You are already in this room.",
+  [ErrorCode.MISSING_PLAYER_ID]: "Missing Player ID in the request form.",
   [ErrorCode.USERNAME_INVALID]:
     "Username must be 3–20 characters and can only contain letters, numbers, underscores, or hyphens.",
   [ErrorCode.INVALID_TARGET]: "That player is no longer in the room.",
@@ -80,7 +82,10 @@ export function isToastErrorCode(code: TErrorCode): code is ToastErrorCode {
 
 /// ==== FULL PAGE ====
 
-export const fullPageErrorCodes = [ErrorCode.ROOM_NOT_FOUND] as const;
+export const fullPageErrorCodes = [
+  ErrorCode.ROOM_NOT_FOUND,
+  ErrorCode.MISSING_PLAYER_ID,
+] as const;
 
 export type FullPageErrorCodes = (typeof fullPageErrorCodes)[number];
 export type FullPageErrorPayload = ErrorPayload<FullPageErrorCodes>;
@@ -91,6 +96,7 @@ export const fullPageErrorMessages = Object.fromEntries(
 
 export const fullPageErrorTitles: Record<FullPageErrorCodes, string> = {
   [ErrorCode.ROOM_NOT_FOUND]: "ROOM NOT FOUND",
+  [ErrorCode.MISSING_PLAYER_ID]: "MISSING_PLAYER_ID",
 };
 
 //// === IN-LINE ====

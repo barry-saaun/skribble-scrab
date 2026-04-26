@@ -93,6 +93,7 @@ export interface components {
         };
         CreateRoomResponse: {
             roomID: string;
+            config: components["schemas"]["RoomConfig"];
             hostID: string;
             hostUsername: string;
             hostDisplayName: string;
@@ -109,7 +110,9 @@ export interface components {
         };
         GetRoomResponse: {
             roomID: string;
+            name: string;
             hostID: string;
+            config: components["schemas"]["RoomConfig"];
             status: components["schemas"]["Status"];
             players: components["schemas"]["PlayerView"][];
             /** Format: date-time */

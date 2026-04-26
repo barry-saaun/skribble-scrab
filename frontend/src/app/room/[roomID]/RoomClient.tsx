@@ -14,15 +14,18 @@ import RoomHeader from "~/app/components/RoomHeader";
 import RoundEndingOverlay from "~/app/components/RoundEndingOverlay";
 import useCanvasSync from "~/hooks/useCanvasSync";
 import HostLeaveModal from "~/app/components/HostLeaveModal";
+import { RoomConfig } from "~/types/game";
 
 export default function RoomClient({
   roomID,
   playerID,
   userName,
+  config,
 }: {
   roomID: string;
   playerID: string;
   userName: string;
+  config: RoomConfig;
 }) {
   const {
     gameState,

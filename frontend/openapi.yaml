@@ -169,10 +169,20 @@ components:
     CreateRoomResponse:
       type: object
       required:
-        [roomID, hostID, hostUsername, hostDisplayName, status, createdAt]
+        [
+          roomID,
+          hostID,
+          config,
+          hostUsername,
+          hostDisplayName,
+          status,
+          createdAt,
+        ]
       properties:
         roomID:
           type: string
+        config:
+          $ref: "#/components/schemas/RoomConfig"
         hostID:
           type: string
         hostUsername:
@@ -202,12 +212,25 @@ components:
 
     GetRoomResponse:
       type: object
-      required: [roomID, hostID, status, players, createdAt]
+      required:
+        [
+          roomID,
+          name,
+          hostID,
+          config,
+          status,
+          players,
+          createdAt,
+        ]
       properties:
         roomID:
           type: string
+        name:
+          type: string
         hostID:
           type: string
+        config:
+          $ref: "#/components/schemas/RoomConfig"
         status:
           $ref: "#/components/schemas/Status"
         players:
