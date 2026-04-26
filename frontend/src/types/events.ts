@@ -1,7 +1,8 @@
 import type { GameStatus, Player } from "./game";
 import type { ErrorPayload } from "./errors";
 
-export type { ErrorPayload } from "./errors";
+// Must mirror backend: ^[a-zA-Z0-9][a-zA-Z0-9_-]{1,18}[a-zA-Z0-9]$
+export const USERNAME_REGEX = /^[a-zA-Z0-9][a-zA-Z0-9_-]{1,18}[a-zA-Z0-9]$/;
 
 // ---- Event type literals ----
 
@@ -12,7 +13,7 @@ export type EventType =
   | "player.leave"
   | "player.left"
   // Host migration
-  | "host.transfer"      // client → server: host picks a successor (Mode B)
+  | "host.transfer" // client → server: host picks a successor (Mode B)
   | "host.transfer.done" // server → client: host changed (Mode A or B)
   // Game lifecycle
   | "game.start"
@@ -33,6 +34,7 @@ export type EventType =
   | "draw.clear"
   // Chat
   | "chat.message"
+  | "chat.history"
   // Error
   | "error";
 
@@ -95,6 +97,11 @@ export interface DrawStrokePayload {
 export interface ChatMessagePayload {
   playerID: string;
   text: string;
+  timestamp: string; // ISO 8601 from server
+}
+
+export interface ChatHistoryPayload {
+  messages: ChatMessagePayload[];
 }
 
 // ---- Client-side log entry types ----
@@ -102,6 +109,7 @@ export interface ChatMessagePayload {
 export interface ChatEntry {
   playerID: string;
   text: string;
+  timestamp: Date;
 }
 
 export interface GuessEntry {
@@ -133,9 +141,6 @@ export interface CanvasHandle {
   clearCanvas: () => void;
 }
 
-export { errorMessages, toastErrorCodes, toastErrorMessages } from "./errors";
-export type { ErrorCode, ToastErrorCode } from "./errors";
-
 // ---- Outgoing payloads (client → server) ----
 
 export interface GuessSubmitPayload {
@@ -161,6 +166,7 @@ export type ServerMessage =
   | { type: "draw.stroke"; payload: DrawStrokePayload }
   | { type: "draw.clear"; payload: Record<string, never> }
   | { type: "chat.message"; payload: ChatMessagePayload }
+  | { type: "chat.history"; payload: ChatHistoryPayload }
   | { type: "round.ending"; payload: RoundEndingPayload }
   | { type: "game.end"; payload: GameEndPayload }
   | { type: "error"; payload: ErrorPayload };

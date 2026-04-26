@@ -1,22 +1,34 @@
 import { redirect } from "next/navigation";
-import { joinRoom } from "~/app/actions";
+import { cookies } from "next/headers";
+import { api } from "~/api/client";
 import RoomClient from "./RoomClient";
 
 export default async function RoomPage({
   params,
-  searchParams,
 }: {
   params: Promise<{ roomID: string }>;
-  searchParams: Promise<{ playerID?: string; username?: string }>;
 }) {
   const { roomID } = await params;
-  const { playerID, username } = await searchParams;
+  const playerID = (await cookies()).get("playerID")?.value;
 
-  if (!playerID || !username) redirect("/error");
+  if (!playerID) redirect("/error?code=MISSING_PLAYER_ID");
 
-  // Registers the player in the room before the page renders.
-  // 409 is fine — the host is already registered on room creation.
-  await joinRoom(roomID, playerID, username);
+  const { data: room, error } = await api.GET("/api/rooms/{roomID}", {
+    params: { path: { roomID } },
+  });
 
-  return <RoomClient roomID={roomID} playerID={playerID} userName={username} />;
+  if (error || !room) redirect("/error?code=ROOM_NOT_FOUND");
+
+  const player = room.players.find((p) => p.id === playerID);
+
+  if (!player) redirect("/error?code=PLAYER_NOT_IN_ROOM");
+
+  return (
+    <RoomClient
+      roomID={roomID}
+      playerID={playerID}
+      userName={player.displayName}
+      config={room.config}
+    />
+  );
 }

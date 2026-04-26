@@ -1,0 +1,2 @@
+DROP TABLE IF EXISTS game_results;
+DROP TABLE IF EXISTS words;

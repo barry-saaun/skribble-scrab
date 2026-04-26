@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "generate:api": "openapi-typescript openapi.yaml -o src/api/v1.d.ts"
+    "generate:api": "node scripts/generate-api.mjs"
   },
   "dependencies": {
     "@phosphor-icons/react": "^2.1.10",

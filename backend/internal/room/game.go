@@ -298,10 +298,21 @@ func (r *Room) handleChatMessage(event Event) {
 		return
 	}
 
-	r.BroadcastEvent(EventChatMessage, chatBroadcastPayload{
-		PlayerID: event.PlayerID,
-		Text:     p.Text,
+	msg := chatBroadcastPayload{
+		PlayerID:  event.PlayerID,
+		Text:      p.Text,
+		Timestamp: time.Now().UTC(),
+	}
+
+	r.mu.Lock()
+	r.ChatLog = append(r.ChatLog, StoredChatMessage{
+		PlayerID:  msg.PlayerID,
+		Text:      msg.Text,
+		Timestamp: msg.Timestamp,
 	})
+	r.mu.Unlock()
+
+	r.BroadcastEvent(EventChatMessage, msg)
 }
 
 func (r *Room) handlePlayerGuess(event Event) {

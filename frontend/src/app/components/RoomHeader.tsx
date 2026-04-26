@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import {
   Tooltip,
   TooltipContent,
@@ -11,6 +12,7 @@ import type { GameState } from "~/types/game";
 
 interface Props {
   roomID: string;
+  roomName: string;
   isDrawer: boolean;
   gameState: GameState;
   // from usePlayerPresence
@@ -24,6 +26,7 @@ interface Props {
 
 export default function RoomHeader({
   roomID,
+  roomName,
   isDrawer,
   gameState,
   showConfirmLeave,
@@ -33,6 +36,8 @@ export default function RoomHeader({
   onLeaveClick,
   onCancelLeave,
 }: Props) {
+  const [copied, setCopied] = useState(false);
+
   const secondsLeft = gameState.secondsRemaining ?? 0;
   const timerPct = Math.min((secondsLeft / 60) * 100, 100);
   const timerColor =
@@ -41,6 +46,13 @@ export default function RoomHeader({
       : secondsLeft > 10
         ? "#C07A1A"
         : "#C0311A";
+
+  function handleCopy() {
+    navigator.clipboard.writeText(roomID).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  }
 
   return (
     <header
@@ -86,9 +98,7 @@ export default function RoomHeader({
             <TooltipTrigger asChild>
               <span className="inline-flex shrink-0">
                 <button
-                  onClick={
-                    gameState.roundLive ? undefined : onLeaveClick
-                  }
+                  onClick={gameState.roundLive ? undefined : onLeaveClick}
                   disabled={gameState.roundLive}
                   className="brut-press font-mono font-bold uppercase tracking-widest text-[10px] py-1.5 px-3 bg-transparent"
                   style={{
@@ -97,7 +107,9 @@ export default function RoomHeader({
                     opacity: gameState.roundLive ? 0.35 : 1,
                     cursor: gameState.roundLive ? "not-allowed" : "pointer",
                     pointerEvents: gameState.roundLive ? "none" : "auto",
-                    boxShadow: isIntermission ? "var(--brut-shadow-sm)" : "none",
+                    boxShadow: isIntermission
+                      ? "var(--brut-shadow-sm)"
+                      : "none",
                   }}
                 >
                   ← LEAVE
@@ -113,10 +125,27 @@ export default function RoomHeader({
         </TooltipProvider>
       )}
 
-      <div className="flex items-center gap-2 min-w-0 flex-1">
-        <span className="font-mono text-xs text-muted-foreground tracking-widest hidden sm:block">
-          {roomID}
+      <div className="flex items-center gap-3 min-w-0 flex-1">
+        <span
+          className="font-mono font-black text-sm uppercase tracking-widest truncate hidden sm:block"
+          style={{ color: "var(--foreground)" }}
+        >
+          <span style={{ color: "var(--muted-foreground)" }}>{"//"}</span>{" "}
+          {roomName}
         </span>
+
+        {gameState.status === "waiting" && (
+          <span
+            className="font-mono text-[10px] px-2 py-0.5 uppercase tracking-wider font-bold shrink-0"
+            style={{
+              border: "1.5px solid var(--muted-foreground)",
+              color: "var(--muted-foreground)",
+            }}
+          >
+            WAITING
+          </span>
+        )}
+
         {gameState.status === "in_progress" && (
           <>
             <span
@@ -141,6 +170,32 @@ export default function RoomHeader({
             )}
           </>
         )}
+      </div>
+
+      {/* Room code + copy — always visible */}
+      <div className="hidden sm:flex items-center shrink-0">
+        <span
+          className="font-mono font-bold text-xs uppercase tracking-widest px-3 py-1.5"
+          style={{
+            border: "2px solid var(--brut-ink)",
+            borderRight: "none",
+            color: "var(--foreground)",
+            background: "var(--secondary)",
+          }}
+        >
+          {roomID}
+        </span>
+        <button
+          onClick={handleCopy}
+          className="brut-press font-mono font-bold text-[10px] uppercase tracking-widest px-2 py-1.5 transition-colors"
+          style={{
+            border: "2px solid var(--brut-ink)",
+            background: copied ? "var(--primary)" : "var(--card)",
+            color: copied ? "oklch(0.975 0.01 80)" : "var(--brut-ink)",
+          }}
+        >
+          {copied ? "COPIED!" : "COPY"}
+        </button>
       </div>
 
       {gameState.status === "in_progress" && (

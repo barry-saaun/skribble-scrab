@@ -40,6 +40,7 @@ const (
 
 	// Chat
 	EventChatMessage EventType = "chat.message"
+	EventChatHistory EventType = "chat.history"
 
 	// Error
 	EventError EventType = "error"

@@ -1,6 +1,7 @@
 -- name: InsertRoom :exec
-INSERT INTO rooms (id, host_id, host_username, host_display_name, visibility, status, max_players)
-VALUES ($1, $2, $3, $4, $5, $6, $7);
+INSERT INTO rooms (id, name, host_id, host_username, host_display_name, visibility, status, max_players)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+RETURNING *;
 
 -- name: GetRoomByID :one
 SELECT * FROM rooms WHERE id = $1;
@@ -22,3 +23,9 @@ VALUES ($1, $2, $3, $4, $5);
 
 -- name: DeleteRoomPlayer :exec
 DELETE FROM room_players WHERE room_id = $1 AND player_id = $2;
+
+-- name: ListRoomPlayers :many
+SELECT room_id, player_id, username, display_name, role, joined_at
+FROM room_players
+WHERE room_id = $1
+ORDER BY joined_at ASC;

@@ -16,18 +16,19 @@ export const ErrorCode = {
   // General room state errors
   PLAYER_ALREADY_IN_ROOM: "PLAYER_ALREADY_IN_ROOM",
   USERNAME_INVALID: "USERNAME_INVALID",
+  MISSING_PLAYER_ID: "MISSING_PLAYER_ID",
 
   // Host transfer errors
   INVALID_TARGET: "INVALID_TARGET",
 } as const;
 
-export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];
+export type TErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];
 
-export interface ErrorPayload<TCode extends ErrorCode = ErrorCode> {
+export interface ErrorPayload<TCode extends TErrorCode = TErrorCode> {
   code: TCode;
 }
 
-export const errorMessages: Partial<Record<ErrorCode, string>> = {
+export const errorMessages: Partial<Record<TErrorCode, string>> = {
   // Game errors
   [ErrorCode.NOT_HOST]: "You are not host",
   [ErrorCode.GAME_ALREADY_ACTIVE]: "The game is currently active",
@@ -43,6 +44,7 @@ export const errorMessages: Partial<Record<ErrorCode, string>> = {
 
   // General room state errors
   [ErrorCode.PLAYER_ALREADY_IN_ROOM]: "You are already in this room.",
+  [ErrorCode.MISSING_PLAYER_ID]: "Missing Player ID in the request form.",
   [ErrorCode.USERNAME_INVALID]:
     "Username must be 3–20 characters and can only contain letters, numbers, underscores, or hyphens.",
   [ErrorCode.INVALID_TARGET]: "That player is no longer in the room.",
@@ -74,13 +76,16 @@ export const toastErrorTitles: Record<ToastErrorCode, string> = {
   [ErrorCode.INVALID_TARGET]: "INVALID TARGET",
 };
 
-export function isToastErrorCode(code: ErrorCode): code is ToastErrorCode {
-  return (toastErrorCodes as readonly ErrorCode[]).includes(code);
+export function isToastErrorCode(code: TErrorCode): code is ToastErrorCode {
+  return (toastErrorCodes as readonly TErrorCode[]).includes(code);
 }
 
 /// ==== FULL PAGE ====
 
-export const fullPageErrorCodes = [ErrorCode.ROOM_NOT_FOUND] as const;
+export const fullPageErrorCodes = [
+  ErrorCode.ROOM_NOT_FOUND,
+  ErrorCode.MISSING_PLAYER_ID,
+] as const;
 
 export type FullPageErrorCodes = (typeof fullPageErrorCodes)[number];
 export type FullPageErrorPayload = ErrorPayload<FullPageErrorCodes>;
@@ -91,6 +96,7 @@ export const fullPageErrorMessages = Object.fromEntries(
 
 export const fullPageErrorTitles: Record<FullPageErrorCodes, string> = {
   [ErrorCode.ROOM_NOT_FOUND]: "ROOM NOT FOUND",
+  [ErrorCode.MISSING_PLAYER_ID]: "MISSING_PLAYER_ID",
 };
 
 //// === IN-LINE ====
@@ -103,6 +109,6 @@ export const inlineErrorMessages = Object.fromEntries(
   inlineErrorCodes.map((code) => [code, errorMessages[code]]),
 ) as Record<InlineErrorCodes, string>;
 
-export function isInlineErrorCode(code: ErrorCode): code is InlineErrorCodes {
-  return (inlineErrorCodes as readonly ErrorCode[]).includes(code);
+export function isInlineErrorCode(code: TErrorCode): code is InlineErrorCodes {
+  return (inlineErrorCodes as readonly TErrorCode[]).includes(code);
 }

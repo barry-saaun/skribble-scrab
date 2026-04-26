@@ -36,6 +36,8 @@ const (
 // setting only requires touching this struct plus any validation logic.
 type RoomConfig struct {
 	Visibility Visibility `json:"visibility"`
+	Name       string     `json:"name"`
+	MaxPlayers int        `json:"maxPlayers"`
 }
 
 type Player struct {
@@ -46,6 +48,12 @@ type Player struct {
 	JoinedAt    time.Time
 }
 
+type StoredChatMessage struct {
+	PlayerID  string
+	Text      string
+	Timestamp time.Time
+}
+
 type Room struct {
 	ID              string
 	HostID          string
@@ -54,15 +62,15 @@ type Room struct {
 	Config          RoomConfig
 	Game            GameState
 	Players         map[string]*Player
-	MaxPlayers      int
 	Clients         map[string]Sender
 	Events          chan Event
 	Status          Status
 	CreatedAt       time.Time
+	ChatLog         []StoredChatMessage
 	queries         *db.Queries
 	mu              sync.RWMutex
 
-	// TEMPORARY: in-memory
+	// manager is used to call RemoveRoom when the last player leaves.
 	manager *RoomManager
 }
 

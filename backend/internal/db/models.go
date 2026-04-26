@@ -115,6 +115,7 @@ type Room struct {
 	MaxPlayers      int32              `json:"max_players"`
 	CreatedAt       pgtype.Timestamptz `json:"created_at"`
 	FinishedAt      pgtype.Timestamptz `json:"finished_at"`
+	Name            string             `json:"name"`
 }
 
 type RoomPlayer struct {

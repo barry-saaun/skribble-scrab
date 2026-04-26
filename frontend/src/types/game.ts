@@ -1,12 +1,18 @@
 import { ErrorPayload } from "./errors";
 
-export type Role = "host" | "player" | "spectator";
+import type { components } from "~/api/v1";
 
-export type GameStatus = "waiting" | "in_progress" | "finished";
+type Schemas = components["schemas"];
+
+export type Role = Schemas["Role"];
+
+export type GameStatus = Schemas["Status"];
 
 export type PlayerID = string;
 
 export type Scores = Record<PlayerID, number>;
+
+export type RoomConfig = components["schemas"]["RoomConfig"];
 
 export interface Player {
   id: PlayerID;

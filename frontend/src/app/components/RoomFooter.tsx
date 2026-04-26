@@ -21,12 +21,7 @@ export default function RoomFooter({ isConnected, roomID, playerCount }: Props) 
           <span>{isConnected ? "LIVE" : "CONNECTING"}</span>
         </div>
       </div>
-      <div className="flex items-center gap-4">
-        <span>
-          ROOM: <span style={{ color: "var(--primary)" }}>{roomID}</span>
-        </span>
-        <span>{playerCount} PLAYERS</span>
-      </div>
+      <span>{playerCount} PLAYERS</span>
     </footer>
   );
 }
