@@ -19,6 +19,7 @@ RUN apk --no-cache add ca-certificates
 WORKDIR /root/
 
 COPY --from=builder /app/server .
+COPY --from=builder /app/db/migrations ./db/migrations
 
 EXPOSE 8080
 
