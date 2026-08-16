@@ -16,6 +16,7 @@ import (
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/joho/godotenv"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 var cfg config.Config
@@ -57,6 +58,8 @@ func main() {
 
 	wsHandler := ws.NewHandler(roomManager, cfg)
 	ws.RegisterRoutes(mux, wsHandler)
+
+	mux.Handle("/metrics", promhttp.Handler())
 
 	mux.HandleFunc("/api/health", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")

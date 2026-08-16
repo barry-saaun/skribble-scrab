@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/barry-saaun/skribble-scrab/backend/internal/db"
+	"github.com/barry-saaun/skribble-scrab/backend/internal/metrics"
 )
 
 // handleTransferHost processes Mode B host transfers where the current host
@@ -301,6 +302,7 @@ func (r *Room) handlePlayerDisconnect(event Event) {
 		_, reconnected := r.Clients[playerID]
 		r.mu.RUnlock()
 		if reconnected {
+			metrics.Reconnections.Inc()
 			log.Printf("[room] grace period elapsed — player %s reconnected, skipping removal", playerID)
 			return
 		}

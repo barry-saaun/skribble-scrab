@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"log"
 
+	"github.com/barry-saaun/skribble-scrab/backend/internal/metrics"
 	"github.com/barry-saaun/skribble-scrab/backend/internal/room"
 	"github.com/gorilla/websocket"
 )
@@ -26,6 +27,7 @@ func (c *Client) Send(msg []byte) {
 	select {
 	case c.send <- msg:
 	default:
+		metrics.MessagesDropped.Inc()
 		log.Printf("client %s send buffer full, dropping message", c.playerID)
 	}
 }
@@ -40,7 +42,10 @@ func (c *Client) PlayerID() string {
 // which signals WritePump to finish.
 func (c *Client) ReadPump(r *room.Room) {
 	log.Printf("[ws] ReadPump started  — player %s (%s / %s)", c.playerID, c.username, c.displayName)
+	metrics.ActiveConnections.Inc()
 	defer func() {
+		metrics.ActiveConnections.Dec()
+		metrics.Disconnects.Inc()
 		log.Printf("[ws] ReadPump exiting  — player %s (%s / %s): removing client, closing send channel", c.playerID, c.username, c.displayName)
 		r.RemoveClientIfSame(c) // identity-safe: won't evict a newer client for the same playerID
 		close(c.send)
@@ -74,6 +79,7 @@ func (c *Client) ReadPump(r *room.Room) {
 			continue
 		}
 
+		metrics.MessagesReceived.WithLabelValues(string(incoming.Type)).Inc()
 		r.Events <- room.Event{
 			Type:     incoming.Type,
 			PlayerID: c.playerID,
@@ -96,6 +102,7 @@ func (c *Client) WritePump() {
 			log.Printf("[ws] WritePump write error — player %s (%s / %s): %v", c.playerID, c.username, c.displayName, err)
 			return
 		}
+		metrics.MessagesSent.Inc()
 	}
 	log.Printf("[ws] WritePump send channel drained — player %s (%s / %s): WS connection will close", c.playerID, c.username, c.displayName)
 }
