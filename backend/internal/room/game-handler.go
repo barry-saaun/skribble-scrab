@@ -1,12 +1,19 @@
 package room
 
+import (
+	"time"
+
+	"github.com/barry-saaun/skribble-scrab/backend/internal/metrics"
+)
+
 func (r *Room) Run() {
 	for event := range r.Events {
+		start := time.Now()
 		switch event.Type {
 		case EventPlayerLeave:
 			if r.Game.RoundLive {
 				r.sendError(event.PlayerID, ErrCannotLeaveMidRound)
-				return
+				break
 			}
 
 			if _, ok := r.GetPlayer(event.PlayerID); ok {
@@ -42,5 +49,6 @@ func (r *Room) Run() {
 		case EventTransferHost:
 			r.handleTransferHost(event)
 		}
+		metrics.EventHandling.WithLabelValues(string(event.Type)).Observe(time.Since(start).Seconds())
 	}
 }
